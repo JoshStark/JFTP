@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/JAGFin1/JFTP.png?branch=master)](https://travis-ci.org/JAGFin1/JFTP)
+
 JFTP
 ====
 
