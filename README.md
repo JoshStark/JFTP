@@ -3,7 +3,9 @@
 JFTP
 ====
 
-JFTP is a FTP client library that combines the two most well-known FTP libraries to create an all-in-one, simple, way to connect to FTP servers in Java. By using the principle of abstraction and strong interfacing, JFTP should allow you to create and interact with FTP connections, regardless of protocol, with relative ease.
+JFTP is an FTP client library that combines the two most well-known FTP libraries to create an all-in-one, simple, way to connect to FTP servers in Java. 
+
+The main goal of JFTP is to give you a way to create and interact with FTP connections, regardless of protocol, with relative ease.
 
 Quick FTP Example
 -----------------
