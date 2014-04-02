@@ -1,0 +1,16 @@
+# Gradle #
+/.gradle
+daemon
+
+# Misc #
+*.class
+
+# Package Files #
+*.war
+*.ear
+
+# Eclipse #
+/.settings
+/build
+/bin
+.classpath
