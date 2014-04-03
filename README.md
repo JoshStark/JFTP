@@ -1,23 +1,33 @@
-Example Gradle Project
-======================
+[![Build Status](https://travis-ci.org/JAGFin1/JFTP.png?branch=master)](https://travis-ci.org/JAGFin1/JFTP)
 
-Example gradle project with Travis-CI compatibility. This project should contain everything you need to get started.
+JFTP
+====
 
-### Get the project
+JFTP is an FTP client library that combines the two most well-known FTP libraries to create an all-in-one, simple, way to connect to FTP servers in Java. 
 
-	git clone https://github.com/JAGFin1/example-gradle-project.git
+The main goal of JFTP is to give you a way to create and interact with FTP connections, regardless of protocol, with relative ease.
 
-### About
+Quick FTP Example
+-----------------
+```java
+Client client = new ClientFactory().createClient(ClientType.FTP);
+client.setHost("a.host.name");
+client.setPort(21);
+client.setCredentials("username", "password");
 
-Once you've cloned the repo, run:
+Connection connection = client.connect();
+connection.setRemoteDirectory("files/todownload");
+  
+List<FtpFile> remoteFiles = connection.listFiles();
+  
+for (FtpFile file : remoteFiles)
+    connection.download(file, "local/file/directory");
+    
+client.disconnect();
+```
 
-	gradle build
+***Thanks to:***
 
-If you're using eclipse, you'll need to let gradle set up your project and buildpath:
+JSch http://www.jcraft.com/jsch/
 
-	gradle eclipse build
-
-
-Gradle should download the initial dependencies to your machine and add them to your project's buildpath. The current .gitignore file has been set up to ignore any gradle-specific libraries. Every new clone of this repo will need an initial build.
-
-[![Build Status](https://travis-ci.org/JAGFin1/example-gradle-project.png?branch=master)](https://travis-ci.org/JAGFin1/example-gradle-project)
+Commons Net FTP: http://commons.apache.org/proper/commons-net/
