@@ -24,4 +24,9 @@ public class ClientFactoryTest {
 	public void factoryShouldReturnNewFtpClientWhenSwitchedToFtp() {
 		assertThat(factory.createClient(ClientType.FTP), is(instanceOf(FtpClient.class)));
 	}
+	
+	@Test
+	public void factoryShouldReturnNewFtpsClientWhenSwitchedToFtps() {
+	    assertThat(factory.createClient(ClientType.FTPS), is(instanceOf(FtpsClient.class)));
+	}
 }

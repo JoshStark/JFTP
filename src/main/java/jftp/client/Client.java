@@ -4,8 +4,11 @@ import jftp.connection.Connection;
 
 public abstract class Client {
 
-	protected String username;
-	protected String password;
+	private static final String ANONYMOUS = "anonymous";
+	
+    protected String username = ANONYMOUS;
+	protected String password = ANONYMOUS;
+	
 	protected String host;
 	protected int port;
 	

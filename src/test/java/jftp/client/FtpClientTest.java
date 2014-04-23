@@ -72,6 +72,11 @@ public class FtpClientTest {
 	}
 
 	@Test
+	public void newFtpClientShouldCreateFTPClientInstance() {
+	    assertThat(ftpClient.ftpClient, is(instanceOf(FTPClient.class)));
+	}
+	
+	@Test
 	public void connectMethodShouldCallonUnderlyingFtpClientConnectMethodWithHostname() throws SocketException, IOException {
 
 		ftpClient.connect();
