@@ -1,5 +1,6 @@
 package jftp.connection;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -14,94 +15,112 @@ import jftp.exception.NoSuchDirectoryException;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class FtpConnection implements Connection {
 
-	private static final String FILE_DOWNLOAD_FAILURE_MESSAGE = "Unable to download file %s";
-	private static final String FILE_STREAM_OPEN_FAIL_MESSAGE = "Unable to write to local directory %s";
-	private static final String FILE_LISTING_ERROR_MESSAGE = "Unable to list files in directory %s";
-	private static final String NO_SUCH_DIRECTORY_MESSAGE = "The directory %s doesn't exist on the remote server.";
-	private static final String UNABLE_TO_CD_MESSAGE = "Remote server was unable to change directory.";
+    private static final String FILE_DOWNLOAD_FAILURE_MESSAGE = "Unable to download file %s";
+    private static final String FILE_STREAM_OPEN_FAIL_MESSAGE = "Unable to write to local directory %s";
+    private static final String FILE_LISTING_ERROR_MESSAGE = "Unable to list files in directory %s";
+    private static final String NO_SUCH_DIRECTORY_MESSAGE = "The directory %s doesn't exist on the remote server.";
+    private static final String UNABLE_TO_CD_MESSAGE = "Remote server was unable to change directory.";
 
-	private static final String FILE_SEPARATOR = System.getProperty("file.separator");
+    private static final String FILE_SEPARATOR = System.getProperty("file.separator");
 
-	private FTPClient client;
-	private String currentDirectory;
+    private FTPClient client;
+    private String currentDirectory;
 
-	public FtpConnection(FTPClient client) {
-		this.client = client;
-		this.currentDirectory = ".";
-	}
+    public FtpConnection(FTPClient client) {
+        this.client = client;
+        this.currentDirectory = ".";
+    }
 
-	@Override
-	public void setRemoteDirectory(String directory) {
+    @Override
+    public void setRemoteDirectory(String directory) {
 
-		try {
+        try {
 
-			boolean success = client.changeWorkingDirectory(directory);
+            boolean success = client.changeWorkingDirectory(directory);
 
-			if (!success)
-				throw new NoSuchDirectoryException(String.format(NO_SUCH_DIRECTORY_MESSAGE, directory));
+            if (!success)
+                throw new NoSuchDirectoryException(String.format(NO_SUCH_DIRECTORY_MESSAGE, directory));
 
-			currentDirectory = client.printWorkingDirectory();
+            currentDirectory = client.printWorkingDirectory();
 
-		} catch (IOException e) {
+        } catch (IOException e) {
 
-			throw new NoSuchDirectoryException(UNABLE_TO_CD_MESSAGE, e);
-		}
-	}
+            throw new NoSuchDirectoryException(UNABLE_TO_CD_MESSAGE, e);
+        }
+    }
 
-	@Override
-	public List<FtpFile> listFiles() {
+    @Override
+    public List<FtpFile> listFiles() {
 
-		List<FtpFile> files = new ArrayList<FtpFile>();
+        return listFiles(".");
+    }
 
-		try {
+    @Override
+    public List<FtpFile> listFiles(String relativePath) {
 
-			FTPFile[] ftpFiles = client.listFiles();
+        List<FtpFile> files = new ArrayList<FtpFile>();
 
-			for (FTPFile file : ftpFiles)
-				files.add(toFtpFile(file));
+        try {
 
-		} catch (IOException e) {
+            FTPFile[] ftpFiles = client.listFiles(relativePath);
 
-			throw new FileListingException(String.format(FILE_LISTING_ERROR_MESSAGE, currentDirectory), e);
-		}
+            for (FTPFile file : ftpFiles)
+                files.add(toFtpFile(file));
 
-		return files;
-	}
+        } catch (IOException e) {
 
-	@Override
-	public void download(FtpFile file, String localDirectory) {
+            throw new FileListingException(String.format(FILE_LISTING_ERROR_MESSAGE, relativePath), e);
+        }
 
-		String localDestination = String.format("%s%s%s", localDirectory, FILE_SEPARATOR, file.getName());
+        return files;
+    }
 
-		try {
-			OutputStream outputStream = new FileOutputStream(localDestination);
+    @Override
+    public void download(FtpFile file, String localDirectory) {
 
-			boolean hasDownloaded = client.retrieveFile(file.getFullPath(), outputStream);
-			
-			if(!hasDownloaded)
-				throw new DownloadFailedException("Server returned failure while downloading.");
-			
-			outputStream.close();
+        String localDestination = String.format("%s%s%s", localDirectory, FILE_SEPARATOR, file.getName());
 
-		} catch (FileNotFoundException e) {
-			throw new DownloadFailedException(String.format(FILE_STREAM_OPEN_FAIL_MESSAGE, localDestination), e);
+        try {
 
-		} catch (IOException e) {
-			throw new DownloadFailedException(String.format(FILE_DOWNLOAD_FAILURE_MESSAGE, file.getName()), e);
-		}
-	}
+            OutputStream outputStream = new FileOutputStream(localDestination);
 
-	private FtpFile toFtpFile(FTPFile ftpFile) {
+            boolean hasDownloaded = client.retrieveFile(file.getFullPath(), outputStream);
 
-		String name = ftpFile.getName();
-		long fileSize = ftpFile.getSize();
-		String fullPath = String.format("%s%s%s", currentDirectory, FILE_SEPARATOR, ftpFile.getName());
-		long mTime = ftpFile.getTimestamp().getTime().getTime();
-		boolean isDirectory = ftpFile.isDirectory();		
+            outputStream.close();
 
-		return new FtpFile(name, fileSize, fullPath, mTime, isDirectory);
-	}
+            ensureFileHasSuccessfullyDownloaded(hasDownloaded);
+
+        } catch (FileNotFoundException e) {
+            throw new DownloadFailedException(String.format(FILE_STREAM_OPEN_FAIL_MESSAGE, localDestination), e);
+
+        } catch (IOException e) {
+            throw new DownloadFailedException(String.format(FILE_DOWNLOAD_FAILURE_MESSAGE, file.getName()), e);
+        }
+    }
+
+    @Override
+    public void upload(File file, String remoteDirectory) {
+        throw new NotImplementedException();
+    }
+
+    private void ensureFileHasSuccessfullyDownloaded(boolean hasDownloaded) {
+
+        if (!hasDownloaded)
+            throw new DownloadFailedException("Server returned failure while downloading.");
+    }
+
+    private FtpFile toFtpFile(FTPFile ftpFile) {
+
+        String name = ftpFile.getName();
+        long fileSize = ftpFile.getSize();
+        String fullPath = String.format("%s%s%s", currentDirectory, FILE_SEPARATOR, ftpFile.getName());
+        long mTime = ftpFile.getTimestamp().getTime().getTime();
+        boolean isDirectory = ftpFile.isDirectory();
+
+        return new FtpFile(name, fileSize, fullPath, mTime, isDirectory);
+    }
 }

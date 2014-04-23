@@ -7,7 +7,7 @@ public abstract class Client {
 	private static final String ANONYMOUS = "anonymous";
 	
     protected String username = ANONYMOUS;
-	protected String password = ANONYMOUS;
+	protected String password = "";
 	
 	protected String host;
 	protected int port;

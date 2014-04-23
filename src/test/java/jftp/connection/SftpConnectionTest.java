@@ -31,155 +31,163 @@ import com.jcraft.jsch.SftpException;
 
 public class SftpConnectionTest {
 
-	private SftpConnection sftpConnection;
-	private ChannelSftp mockChannel;
+    private SftpConnection sftpConnection;
+    private ChannelSftp mockChannel;
 
-	private static final String DIRECTORY = "this/is/the/pwd";
+    private static final String DIRECTORY = "this/is/the/pwd";
 
-	@Rule
-	public ExpectedException expectedException = ExpectedException.none();
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
-	@Before
-	public void setUp() throws SftpException {
+    @Before
+    public void setUp() throws SftpException {
 
-		mockChannel = mock(ChannelSftp.class);
+        mockChannel = mock(ChannelSftp.class);
 
-		Vector<LsEntry> lsEntries = createEntries();
-		when(mockChannel.ls(".")).thenReturn(lsEntries);
-		when(mockChannel.pwd()).thenReturn(DIRECTORY);
+        Vector<LsEntry> lsEntries = createEntries();
+        when(mockChannel.ls(anyString())).thenReturn(lsEntries);
+        when(mockChannel.pwd()).thenReturn(DIRECTORY);
 
-		sftpConnection = new SftpConnection(mockChannel);
-	}
+        sftpConnection = new SftpConnection(mockChannel);
+    }
 
-	@Test
-	public void setDirectoryShouldCallOnChannelLsCommandWithDirectoryPath() throws SftpException {
+    @Test
+    public void setDirectoryShouldCallOnChannelLsCommandWithDirectoryPath() throws SftpException {
 
-		String directory = "directory/path";
+        String directory = "directory/path";
 
-		sftpConnection.setRemoteDirectory(directory);
+        sftpConnection.setRemoteDirectory(directory);
 
-		verify(mockChannel).cd(directory);
-	}
+        verify(mockChannel).cd(directory);
+    }
 
-	@Test
-	public void whenDirectoryDoesNotExistThenNoSuchDirectoryExceptionShouldBeThrown() throws SftpException {
+    @Test
+    public void whenDirectoryDoesNotExistThenNoSuchDirectoryExceptionShouldBeThrown() throws SftpException {
 
-		expectedException.expect(NoSuchDirectoryException.class);
-		expectedException.expectMessage(is(equalTo("Directory not/a/directory does not exist.")));
+        expectedException.expect(NoSuchDirectoryException.class);
+        expectedException.expectMessage(is(equalTo("Directory not/a/directory does not exist.")));
 
-		String directory = "not/a/directory";
+        String directory = "not/a/directory";
 
-		doThrow(new SftpException(0, "")).when(mockChannel).cd(directory);
+        doThrow(new SftpException(0, "")).when(mockChannel).cd(directory);
 
-		sftpConnection.setRemoteDirectory(directory);
-	}
+        sftpConnection.setRemoteDirectory(directory);
+    }
 
-	@Test
-	public void listFilesMethodShouldCallOnChannelLsMethodForPresentDirectory() throws SftpException {
+    @Test
+    public void listFilesMethodShouldCallOnChannelLsMethodForPresentDirectory() throws SftpException {
 
-		sftpConnection.listFiles();
+        sftpConnection.listFiles();
 
-		verify(mockChannel).ls(".");
-	}
+        verify(mockChannel).ls(".");
+    }
 
-	@Test
-	public void setDirectoryMethodShouldCallOnChannelPwdMethodToGetCurrentDirectory() throws SftpException {
+    @Test
+    public void whenListingFilesGivingRelativePathThenChannelLsMethodShouldUseGivenPath() throws SftpException {
 
-		sftpConnection.setRemoteDirectory(DIRECTORY);
+        sftpConnection.listFiles("some/other/path");
 
-		verify(mockChannel, times(1)).pwd();
-	}
+        verify(mockChannel).ls("some/other/path");
+    }
 
-	@Test
-	public void whenLsCommandThrowsExceptionThenItShouldBeCaughtAndWrappedInFileListingExcepion() throws SftpException {
+    @Test
+    public void setDirectoryMethodShouldCallOnChannelPwdMethodToGetCurrentDirectory() throws SftpException {
 
-		expectedException.expect(FileListingException.class);
-		expectedException.expectMessage(is(equalTo("Unable to list files in directory .")));
+        sftpConnection.setRemoteDirectory(DIRECTORY);
 
-		when(mockChannel.ls(".")).thenThrow(new SftpException(999, ""));
+        verify(mockChannel, times(1)).pwd();
+    }
 
-		sftpConnection.listFiles();
-	}
+    @Test
+    public void whenLsCommandThrowsExceptionThenItShouldBeCaughtAndWrappedInFileListingExcepion() throws SftpException {
 
-	@Test
-	public void lsEntriesReturnedFromChannelShouldBeParsedIntoFtpFileAndReturnedInList() {
+        expectedException.expect(FileListingException.class);
+        expectedException.expectMessage(is(equalTo("Unable to list files in directory .")));
 
-		sftpConnection.setRemoteDirectory(DIRECTORY);
+        when(mockChannel.ls(".")).thenThrow(new SftpException(999, ""));
 
-		List<FtpFile> files = sftpConnection.listFiles();
+        sftpConnection.listFiles();
+    }
 
-		assertThat(files.get(0).getName(), is(equalTo("File 1")));
-		assertThat(files.get(0).getSize(), is(equalTo(123l)));
-		assertThat(files.get(0).getFullPath(), is(equalTo(DIRECTORY + "/File 1")));
-		assertThat(files.get(0).isDirectory(), is(equalTo(true)));
+    @Test
+    public void lsEntriesReturnedFromChannelShouldBeParsedIntoFtpFileAndReturnedInList() {
 
-		assertThat(files.get(1).getName(), is(equalTo("File 2")));
-		assertThat(files.get(1).getSize(), is(equalTo(456l)));
-		assertThat(files.get(1).getFullPath(), is(equalTo(DIRECTORY + "/File 2")));
-		assertThat(files.get(1).isDirectory(), is(equalTo(false)));
+        sftpConnection.setRemoteDirectory(DIRECTORY);
 
-		assertThat(files.get(2).getName(), is(equalTo("File 3")));
-		assertThat(files.get(2).getSize(), is(equalTo(789l)));
-		assertThat(files.get(2).getFullPath(), is(equalTo(DIRECTORY + "/File 3")));
-		assertThat(files.get(2).isDirectory(), is(equalTo(true)));
-	}
+        List<FtpFile> files = sftpConnection.listFiles();
 
-	@Test
-	public void returnedFtpFilesShouldHaveCorrectModifiedDateTimesAgainstThem() {
+        assertThat(files.get(0).getName(), is(equalTo("File 1")));
+        assertThat(files.get(0).getSize(), is(equalTo(123l)));
+        assertThat(files.get(0).getFullPath(), is(equalTo(DIRECTORY + "/File 1")));
+        assertThat(files.get(0).isDirectory(), is(equalTo(true)));
 
-		List<FtpFile> files = sftpConnection.listFiles();
+        assertThat(files.get(1).getName(), is(equalTo("File 2")));
+        assertThat(files.get(1).getSize(), is(equalTo(456l)));
+        assertThat(files.get(1).getFullPath(), is(equalTo(DIRECTORY + "/File 2")));
+        assertThat(files.get(1).isDirectory(), is(equalTo(false)));
 
-		assertThat(files.get(0).getLastModified().toString("dd/MM/yyyy HH:mm:ss"), is(equalTo("11/03/2014 08:07:45")));
-		assertThat(files.get(1).getLastModified().toString("dd/MM/yyyy HH:mm:ss"), is(equalTo("12/03/2014 19:22:41")));
-		assertThat(files.get(2).getLastModified().toString("dd/MM/yyyy HH:mm:ss"), is(equalTo("08/02/2014 17:09:24")));
-	}
+        assertThat(files.get(2).getName(), is(equalTo("File 3")));
+        assertThat(files.get(2).getSize(), is(equalTo(789l)));
+        assertThat(files.get(2).getFullPath(), is(equalTo(DIRECTORY + "/File 3")));
+        assertThat(files.get(2).isDirectory(), is(equalTo(true)));
+    }
 
-	@Test
-	public void downloadMethodShouldCallChannelGetMethodWithFtpFileNameAndDirectory() throws SftpException {
+    @Test
+    public void returnedFtpFilesShouldHaveCorrectModifiedDateTimesAgainstThem() {
 
-		FtpFile file = new FtpFile("File Name.txt", 1000, "/remote/server/dir/File Name.txt", 123456789, false);
+        List<FtpFile> files = sftpConnection.listFiles();
 
-		sftpConnection.download(file, "some/directory");
+        assertThat(files.get(0).getLastModified().toString("dd/MM/yyyy HH:mm:ss"), is(equalTo("11/03/2014 08:07:45")));
+        assertThat(files.get(1).getLastModified().toString("dd/MM/yyyy HH:mm:ss"), is(equalTo("12/03/2014 19:22:41")));
+        assertThat(files.get(2).getLastModified().toString("dd/MM/yyyy HH:mm:ss"), is(equalTo("08/02/2014 17:09:24")));
+    }
 
-		verify(mockChannel).get("File Name.txt", "some/directory");
-	}
+    @Test
+    public void downloadMethodShouldCallChannelGetMethodWithFtpFileNameAndDirectory() throws SftpException {
 
-	@Test
-	public void downloadMethodShouldThrowDownloadFailedExceptionWhenChannelThrowsSftpConnection() throws SftpException {
+        FtpFile file = new FtpFile("File Name.txt", 1000, "/remote/server/dir/File Name.txt", 123456789, false);
 
-		expectedException.expect(DownloadFailedException.class);
-		expectedException.expectMessage(is(equalTo("Unable to download file File Name.txt")));
+        sftpConnection.download(file, "some/directory");
 
-		doThrow(new SftpException(999, "")).when(mockChannel).get(anyString(), anyString());
+        verify(mockChannel).get("File Name.txt", "some/directory");
+    }
 
-		FtpFile file = new FtpFile("File Name.txt", 1000, "remote/server/dir/File Name.txt", 123456789, false);
+    @Test
+    public void downloadMethodShouldThrowDownloadFailedExceptionWhenChannelThrowsSftpConnection() throws SftpException {
 
-		sftpConnection.download(file, "some/directory");
-	}
+        expectedException.expect(DownloadFailedException.class);
+        expectedException.expectMessage(is(equalTo("Unable to download file File Name.txt")));
 
-	private Vector<LsEntry> createEntries() {
+        doThrow(new SftpException(999, "")).when(mockChannel).get(anyString(), anyString());
 
-		Vector<LsEntry> vector = new Vector<LsEntry>();
+        FtpFile file = new FtpFile("File Name.txt", 1000, "remote/server/dir/File Name.txt", 123456789, false);
 
-		vector.add(createSingleEntry("File 1", 123l, 1394525265, true));
-		vector.add(createSingleEntry("File 2", 456l, 1394652161, false));
-		vector.add(createSingleEntry("File 3", 789l, 1391879364, true));
+        sftpConnection.download(file, "some/directory");
+    }
 
-		return vector;
-	}
+    private Vector<LsEntry> createEntries() {
 
-	private LsEntry createSingleEntry(String fileName, long size, int mTime, boolean directory) {
+        Vector<LsEntry> vector = new Vector<LsEntry>();
 
-		SftpATTRS attributes = mock(SftpATTRS.class);
-		when(attributes.getSize()).thenReturn(size);
-		when(attributes.getMTime()).thenReturn(mTime);
+        vector.add(createSingleEntry("File 1", 123l, 1394525265, true));
+        vector.add(createSingleEntry("File 2", 456l, 1394652161, false));
+        vector.add(createSingleEntry("File 3", 789l, 1391879364, true));
 
-		LsEntry entry = mock(LsEntry.class);
-		when(entry.getAttrs()).thenReturn(attributes);
-		when(entry.getFilename()).thenReturn(fileName);
-		when(entry.getAttrs().isDir()).thenReturn(directory);
-		
-		return entry;
-	}
+        return vector;
+    }
+
+    private LsEntry createSingleEntry(String fileName, long size, int mTime, boolean directory) {
+
+        SftpATTRS attributes = mock(SftpATTRS.class);
+        when(attributes.getSize()).thenReturn(size);
+        when(attributes.getMTime()).thenReturn(mTime);
+
+        LsEntry entry = mock(LsEntry.class);
+        when(entry.getAttrs()).thenReturn(attributes);
+        when(entry.getFilename()).thenReturn(fileName);
+        when(entry.getAttrs().isDir()).thenReturn(directory);
+
+        return entry;
+    }
 
 }

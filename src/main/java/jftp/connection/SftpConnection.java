@@ -1,9 +1,11 @@
 package jftp.connection;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import jftp.exception.DownloadFailedException;
 import jftp.exception.FileListingException;
 import jftp.exception.NoSuchDirectoryException;
@@ -14,77 +16,86 @@ import com.jcraft.jsch.SftpException;
 
 public class SftpConnection implements Connection {
 
-	private static final String DIRECTORY_DOES_NOT_EXIST_MESSAGE = "Directory %s does not exist.";
-	private static final String FILE_SEPARATOR = System.getProperty("file.separator");
-	
-	private static final int MILLIS = 1000;
+    private static final String DIRECTORY_DOES_NOT_EXIST_MESSAGE = "Directory %s does not exist.";
+    private static final String FILE_SEPARATOR = System.getProperty("file.separator");
 
-	private ChannelSftp channel;
-	private String currentDirectory;
+    private static final int MILLIS = 1000;
 
-	public SftpConnection(ChannelSftp channel) {
-		this.channel = channel;
-		this.currentDirectory = ".";
-	}
+    private ChannelSftp channel;
+    private String currentDirectory;
 
-	@Override
-	public void setRemoteDirectory(String directory) {
+    public SftpConnection(ChannelSftp channel) {
+        this.channel = channel;
+        this.currentDirectory = ".";
+    }
 
-		try {
+    @Override
+    public void setRemoteDirectory(String directory) {
 
-			channel.cd(directory);
-			currentDirectory = channel.pwd();
+        try {
 
-		} catch (SftpException e) {
+            channel.cd(directory);
+            currentDirectory = channel.pwd();
 
-			throw new NoSuchDirectoryException(String.format(DIRECTORY_DOES_NOT_EXIST_MESSAGE, directory), e);
-		}
-	}
+        } catch (SftpException e) {
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public List<FtpFile> listFiles() {
+            throw new NoSuchDirectoryException(String.format(DIRECTORY_DOES_NOT_EXIST_MESSAGE, directory), e);
+        }
+    }
 
-		List<FtpFile> files = new ArrayList<FtpFile>();
+    @Override
+    public List<FtpFile> listFiles() {
 
-		try {
+        return listFiles(".");
+    }
 
-			Vector<LsEntry> lsEntries = channel.ls(".");
+    @SuppressWarnings("unchecked")
+    @Override
+    public List<FtpFile> listFiles(String relativePath) {
 
-			for (LsEntry entry : lsEntries)
-				files.add(toFtpFile(entry));
+        List<FtpFile> files = new ArrayList<FtpFile>();
 
-		} catch (SftpException e) {
+        try {
 
-			throw new FileListingException("Unable to list files in directory " + currentDirectory, e);
-		}
+            Vector<LsEntry> lsEntries = channel.ls(relativePath);
 
-		return files;
-	}
+            for (LsEntry entry : lsEntries)
+                files.add(toFtpFile(entry));
 
-	@Override
-	public void download(FtpFile file, String localDirectory) {
+        } catch (SftpException e) {
 
-		try {
+            throw new FileListingException("Unable to list files in directory " + currentDirectory, e);
+        }
 
-			channel.get(file.getName(), localDirectory);
+        return files;
+    }
 
-		} catch (SftpException e) {
+    @Override
+    public void download(FtpFile file, String localDirectory) {
 
-			throw new DownloadFailedException("Unable to download file " + file.getName(), e);
-		}
+        try {
 
-	}
+            channel.get(file.getName(), localDirectory);
 
-	private FtpFile toFtpFile(LsEntry lsEntry) {
+        } catch (SftpException e) {
 
-		String name = lsEntry.getFilename();
-		long fileSize = lsEntry.getAttrs().getSize();
-		String fullPath = String.format("%s%s%s", currentDirectory, FILE_SEPARATOR, lsEntry.getFilename());
-		int mTime = lsEntry.getAttrs().getMTime();
-		boolean directory = lsEntry.getAttrs().isDir();
+            throw new DownloadFailedException("Unable to download file " + file.getName(), e);
+        }
+    }
 
-		return new FtpFile(name, fileSize, fullPath, (long) mTime * MILLIS, directory);
-	}
+    @Override
+    public void upload(File file, String remoteDirectory) {
+        throw new NotImplementedException();
+    }
 
+    private FtpFile toFtpFile(LsEntry lsEntry) {
+
+        String name = lsEntry.getFilename();
+        long fileSize = lsEntry.getAttrs().getSize();
+        String fullPath = String.format("%s%s%s", currentDirectory, FILE_SEPARATOR, lsEntry.getFilename());
+        int mTime = lsEntry.getAttrs().getMTime();
+        boolean directory = lsEntry.getAttrs().isDir();
+
+        return new FtpFile(name, fileSize, fullPath, (long) mTime * MILLIS, directory);
+    }
 }

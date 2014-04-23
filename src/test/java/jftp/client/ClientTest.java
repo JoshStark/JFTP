@@ -16,7 +16,7 @@ public class ClientTest {
     public void usernameAndPasswordShouldDefaultToAnonymousWhenClassInstantiated() {
         
        assertThat(client.username, is(equalTo("anonymous")));
-       assertThat(client.password, is(equalTo("anonymous")));
+       assertThat(client.password, is(equalTo("")));
     }
     
     

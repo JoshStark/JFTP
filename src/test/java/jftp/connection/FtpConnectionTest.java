@@ -58,7 +58,7 @@ public class FtpConnectionTest {
 
 		FTPFile[] files = createRemoteFTPFiles();
 
-		when(mockFtpClient.listFiles()).thenReturn(files);
+		when(mockFtpClient.listFiles(anyString())).thenReturn(files);
 
 		ftpConnection = new FtpConnection(mockFtpClient);
 
@@ -112,11 +112,11 @@ public class FtpConnectionTest {
 	}
 
 	@Test
-	public void whenListingFilesThenFtpClientListFilesMethodShouldBeCalled() throws IOException {
+	public void whenListingFilesThenFtpClientListFilesMethodShouldBeCalledForCurrentWorkingDirectory() throws IOException {
 
 		ftpConnection.listFiles();
 
-		verify(mockFtpClient).listFiles();
+		verify(mockFtpClient).listFiles(".");
 	}
 
 	@Test
@@ -125,7 +125,7 @@ public class FtpConnectionTest {
 		expectedException.expect(FileListingException.class);
 		expectedException.expectMessage(is(equalTo("Unable to list files in directory .")));
 
-		when(mockFtpClient.listFiles()).thenThrow(new IOException());
+		when(mockFtpClient.listFiles(".")).thenThrow(new IOException());
 
 		ftpConnection.listFiles();
 	}
@@ -162,6 +162,15 @@ public class FtpConnectionTest {
 		assertThat(files.get(0).getLastModified().toString("dd/MM/yyyy HH:mm:ss"), is(equalTo("19/03/2014 21:40:00")));
 		assertThat(files.get(1).getLastModified().toString("dd/MM/yyyy HH:mm:ss"), is(equalTo("19/03/2014 21:40:00")));
 		assertThat(files.get(2).getLastModified().toString("dd/MM/yyyy HH:mm:ss"), is(equalTo("19/03/2014 21:40:00")));
+	}
+	
+	@Test
+	public void whenListingFilesAndGivingRelativePathThenThatPathShouldBeUsedAlongsideCurrentWorkingDir() throws IOException {
+	    
+	    ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
+	    ftpConnection.listFiles("relativePath");
+	    
+	    verify(mockFtpClient).listFiles("relativePath");
 	}
 
 	@Test
