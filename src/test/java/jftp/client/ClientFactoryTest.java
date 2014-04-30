@@ -6,7 +6,7 @@ import static org.junit.Assert.assertThat;
 import jftp.client.ClientFactory;
 import jftp.client.FtpClient;
 import jftp.client.SftpClient;
-import jftp.client.ClientFactory.ClientType;
+import jftp.client.ClientFactory.Protocol;
 
 import org.junit.Test;
 
@@ -17,16 +17,16 @@ public class ClientFactoryTest {
 	
 	@Test
 	public void factoryShouldReturnNewStfpClientWhenSwitchStringIsSftp() {
-		assertThat(factory.createClient(ClientType.SFTP), is(instanceOf(SftpClient.class)));
+		assertThat(factory.createClient(Protocol.SFTP), is(instanceOf(SftpClient.class)));
 	}
 
 	@Test
 	public void factoryShouldReturnNewFtpClientWhenSwitchedToFtp() {
-		assertThat(factory.createClient(ClientType.FTP), is(instanceOf(FtpClient.class)));
+		assertThat(factory.createClient(Protocol.FTP), is(instanceOf(FtpClient.class)));
 	}
 	
 	@Test
 	public void factoryShouldReturnNewFtpsClientWhenSwitchedToFtps() {
-	    assertThat(factory.createClient(ClientType.FTPS), is(instanceOf(FtpsClient.class)));
+	    assertThat(factory.createClient(Protocol.FTPS), is(instanceOf(FtpsClient.class)));
 	}
 }

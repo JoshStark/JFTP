@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 import jftp.client.SftpClient;
+import jftp.client.auth.UserCredentials;
 import jftp.connection.Connection;
 import jftp.connection.ConnectionFactory;
 import jftp.connection.SftpConnection;
@@ -49,14 +50,18 @@ public class SftpClientTest {
 	@Rule
 	public ExpectedException expectedException = ExpectedException.none();
 	
+	private UserCredentials userCredentials;
+	
 	@Before
 	public void setUp() throws JSchException {
 
 		initMocks(this);
 
+		userCredentials = new UserCredentials("user", "password");
+		
 		sftpClient.setHost("host");
 		sftpClient.setPort(999);
-		sftpClient.setCredentials("user", "password");
+		sftpClient.setCredentials(userCredentials);
 
 		when(mockConnectionFactory.createSftpConnection(any(Channel.class))).thenReturn(new SftpConnection(new ChannelSftp()));
 	}

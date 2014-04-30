@@ -15,10 +15,8 @@ public class ClientTest {
     @Test
     public void usernameAndPasswordShouldDefaultToAnonymousWhenClassInstantiated() {
         
-       assertThat(client.username, is(equalTo("anonymous")));
-       assertThat(client.password, is(equalTo("")));
+       assertThat(client.userCredentials.getUsername(), is(equalTo("anonymous")));
     }
-    
     
     class TestableClient extends Client {
 
@@ -31,6 +29,5 @@ public class ClientTest {
         public void disconnect() {
             
         }
-        
     }
 }

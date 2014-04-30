@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
-import jftp.client.FtpClient;
+import jftp.client.auth.UserCredentials;
 import jftp.connection.Connection;
 import jftp.connection.ConnectionFactory;
 import jftp.connection.FtpConnection;
@@ -48,8 +48,7 @@ public class FtpClientTest {
 
 	private String hostname;
 	private int port;
-	private String username;
-	private String password;
+	private UserCredentials userCredentials;
 
 	@Before
 	public void setUp() throws IOException {
@@ -57,15 +56,15 @@ public class FtpClientTest {
 
 		hostname = "this is a hostname";
 		port = 80;
-		username = "thisisausername";
-		password = "thisisapassword";
+		
+		userCredentials = new UserCredentials("thisisausername", "thisisapassword");
 
 		ftpClient.setHost(hostname);
 		ftpClient.setPort(port);
-		ftpClient.setCredentials(username, password);
+		ftpClient.setCredentials(userCredentials);
 
 		when(mockFtpClient.getReplyCode()).thenReturn(200);
-		when(mockFtpClient.login(username, password)).thenReturn(true);
+		when(mockFtpClient.login(userCredentials.getUsername(), userCredentials.getPassword())).thenReturn(true);
 		when(mockFtpClient.isConnected()).thenReturn(true);
 		
 		when(mockConnectionFactory.createFtpConnection(mockFtpClient)).thenReturn(new FtpConnection(mockFtpClient));
@@ -92,7 +91,7 @@ public class FtpClientTest {
 		InOrder inOrder = Mockito.inOrder(mockFtpClient);
 
 		inOrder.verify(mockFtpClient).enterLocalPassiveMode();
-		inOrder.verify(mockFtpClient).login(username, password);
+		inOrder.verify(mockFtpClient).login(userCredentials.getUsername(), userCredentials.getPassword());
 	}
 
 	@Test
@@ -159,9 +158,9 @@ public class FtpClientTest {
 	public void ifUnableToLoginToFtpClientThenThrowConnectionInitialisationException() throws IOException {
 		
 		expectedException.expect(ConnectionInitialisationException.class);
-		expectedException.expectMessage(is(equalTo("Unable to login for user " + username)));
+		expectedException.expectMessage(is(equalTo("Unable to login for user " + userCredentials.getUsername())));
 		
-		when(mockFtpClient.login(username, password)).thenReturn(false);
+		when(mockFtpClient.login(userCredentials.getUsername(), userCredentials.getPassword())).thenReturn(false);
 		
 		ftpClient.connect();
 	}

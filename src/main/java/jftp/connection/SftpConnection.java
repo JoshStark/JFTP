@@ -1,6 +1,5 @@
 package jftp.connection;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -84,7 +83,7 @@ public class SftpConnection implements Connection {
     }
 
     @Override
-    public void upload(File file, String remoteDirectory) {
+    public void upload(String localFilePath, String remoteDirectory) {
         throw new NotImplementedException();
     }
 

@@ -1,26 +1,21 @@
 package jftp.client;
 
+import jftp.client.auth.UserCredentials;
 import jftp.connection.Connection;
+import jftp.exception.ConnectionInitialisationException;
 
 public abstract class Client {
 
-	private static final String ANONYMOUS = "anonymous";
-	
-    protected String username = ANONYMOUS;
-	protected String password = "";
-	
 	protected String host;
 	protected int port;
+	protected UserCredentials userCredentials = UserCredentials.ANONYMOUS;
 	
 	/**
 	 * 
-	 * @param username
-	 * @param password
+	 * @param userCredentials
 	 */
-	public void setCredentials(String username, String password) {
-		
-		this.username = username;
-		this.password = password;		
+	public void setCredentials(UserCredentials userCredentials) {
+		this.userCredentials = userCredentials;
 	}
 
 	/**
@@ -40,8 +35,14 @@ public abstract class Client {
 	}
 	
 	/**
+	 * Opens a connection to the given host and port.
 	 * 
 	 * @return
+	 * An active connection matching the protocol set by the client. All activity and
+	 * communication should be handled using this connection.
+	 * 
+	 * @throws 
+	 * ConnectionInitialisationException
 	 */
 	public abstract Connection connect();
 	

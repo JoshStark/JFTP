@@ -41,13 +41,28 @@ public class FtpClient extends Client {
 
         return connectionFactory.createFtpConnection(ftpClient);
     }
+    
+    public void disconnect() {
+        
+        try {
+            
+            if (null == ftpClient)
+                throw new ClientDisconnectionException("The underlying client was null.");
+            
+            if (ftpClient.isConnected())
+                ftpClient.disconnect();
+            
+        } catch (IOException e) {
+            throw new ClientDisconnectionException("There was an unexpected error while trying to disconnect.", e);
+        }
+    }
 
     private void login() throws IOException, ConnectionInitialisationException {
 
-        boolean hasLoggedIn = ftpClient.login(username, password);
+        boolean hasLoggedIn = ftpClient.login(userCredentials.getUsername(), userCredentials.getPassword());
 
         if (!hasLoggedIn)
-            throw new ConnectionInitialisationException(String.format(UNABLE_TO_LOGIN_MESSAGE, username));
+            throw new ConnectionInitialisationException(String.format(UNABLE_TO_LOGIN_MESSAGE, userCredentials.getUsername()));
     }
 
     private void setSpecificModesOnClient() {
@@ -62,20 +77,5 @@ public class FtpClient extends Client {
 
         if (!FTPReply.isPositiveCompletion(ftpClient.getReplyCode()))
             throw new ConnectionInitialisationException(String.format(STATUS_ERROR_MESSAGE, host, port));
-    }
-
-    public void disconnect() {
-
-        try {
-
-            if (null == ftpClient)
-                throw new ClientDisconnectionException("The underlying client was null.");
-
-            if (ftpClient.isConnected())
-                ftpClient.disconnect();
-
-        } catch (IOException e) {
-            throw new ClientDisconnectionException("There was an unexpected error while trying to disconnect.", e);
-        }
     }
 }

@@ -33,9 +33,9 @@ public class SftpClient extends Client {
 
 		try {
 
-			session = jsch.getSession(username, host, port);
+			session = jsch.getSession(userCredentials.getUsername(), host, port);
 			session.setConfig("StrictHostKeyChecking", "no");
-			session.setPassword(password);
+			session.setPassword(userCredentials.getPassword());
 
 			session.connect();
 

@@ -2,16 +2,16 @@ package jftp.client;
 
 public class ClientFactory {
 
-    public enum ClientType {
+    public enum Protocol {
         FTP, FTPS, SFTP
     }
 
-    public Client createClient(ClientType clientType) {
+    public Client createClient(Protocol clientType) {
 
-        if (clientType == ClientType.FTP)
+        if (clientType == Protocol.FTP)
             return new FtpClient();
 
-        if (clientType == ClientType.FTPS)
+        if (clientType == Protocol.FTPS)
             return new FtpsClient();
 
         return new SftpClient();

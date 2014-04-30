@@ -1,6 +1,5 @@
 package jftp.connection;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -103,7 +102,7 @@ public class FtpConnection implements Connection {
     }
 
     @Override
-    public void upload(File file, String remoteDirectory) {
+    public void upload(String localFilePath, String remoteDirectory) {
         throw new NotImplementedException();
     }
 
