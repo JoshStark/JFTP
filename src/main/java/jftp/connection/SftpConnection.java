@@ -1,11 +1,12 @@
 package jftp.connection;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
 import jftp.exception.FtpException;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import jftp.util.FileStreamFactory;
 
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
@@ -13,6 +14,7 @@ import com.jcraft.jsch.SftpException;
 
 public class SftpConnection implements Connection {
 
+    private static final String COULD_NOT_FIND_FILE_MESSAGE = "Could not find file: %s";
     private static final String DIRECTORY_DOES_NOT_EXIST_MESSAGE = "Directory %s does not exist.";
     private static final String FILE_SEPARATOR = System.getProperty("file.separator");
 
@@ -20,6 +22,8 @@ public class SftpConnection implements Connection {
 
     private ChannelSftp channel;
     private String currentDirectory = ".";
+    
+    private FileStreamFactory fileStreamFactory = new FileStreamFactory();
 
     public SftpConnection(ChannelSftp channel) {
         this.channel = channel;
@@ -81,7 +85,18 @@ public class SftpConnection implements Connection {
 
     @Override
     public void upload(String localFilePath, String remoteDirectory) {
-        throw new NotImplementedException();
+        
+        try {
+            
+            channel.put(fileStreamFactory.createInputStream(localFilePath), remoteDirectory);
+            
+        } catch (FileNotFoundException e) {
+            
+            throw new FtpException(String.format(COULD_NOT_FIND_FILE_MESSAGE, localFilePath), e);
+        } catch (SftpException e) {
+            
+            throw new FtpException("Upload failed to complete.", e);
+        }
     }
 
     private FtpFile toFtpFile(LsEntry lsEntry) {

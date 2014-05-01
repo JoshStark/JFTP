@@ -9,16 +9,23 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.util.List;
 import java.util.Vector;
 
 import jftp.exception.FtpException;
+import jftp.util.FileStreamFactory;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
@@ -27,24 +34,38 @@ import com.jcraft.jsch.SftpException;
 
 public class SftpConnectionTest {
 
-    private SftpConnection sftpConnection;
     private ChannelSftp mockChannel;
 
     private static final String DIRECTORY = "this/is/the/pwd";
 
+    @Mock
+    private FileStreamFactory mockFileStreamFactory;
+    
+    @InjectMocks
+    private SftpConnection sftpConnection;
+    
+    private FileInputStream mockFileInputStream;
+    private FileOutputStream mockFileOutputStream;
+    
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
     @Before
-    public void setUp() throws SftpException {
+    public void setUp() throws SftpException, FileNotFoundException {
 
         mockChannel = mock(ChannelSftp.class);
 
         Vector<LsEntry> lsEntries = createEntries();
+        
         when(mockChannel.ls(anyString())).thenReturn(lsEntries);
         when(mockChannel.pwd()).thenReturn(DIRECTORY);
 
         sftpConnection = new SftpConnection(mockChannel);
+        
+        initMocks(this);
+        
+        when(mockFileStreamFactory.createInputStream(anyString())).thenReturn(mockFileInputStream);
+        when(mockFileStreamFactory.createOutputStream(anyString())).thenReturn(mockFileOutputStream);
     }
 
     @Test
@@ -161,6 +182,36 @@ public class SftpConnectionTest {
         sftpConnection.download(file, "some/directory");
     }
 
+    @Test
+    public void uploadingShouldCallUnderlyingChannelToBeginUploadUsingCreatedFileInputStream() throws SftpException {
+        
+        sftpConnection.upload("local/file/to/upload.txt", "remote/directory");
+        
+        verify(mockChannel).put(mockFileInputStream, "remote/directory");
+    }
+    
+    @Test
+    public void ifConnectionIsUnableToFindOrOpenFileOnClientThenExceptionShouldBeCaughtAndRethrown() throws FileNotFoundException {
+
+        expectedException.expect(FtpException.class);
+        expectedException.expectMessage(is(equalTo("Could not find file: local/file/to/upload.txt")));
+        
+        when(mockFileStreamFactory.createInputStream("local/file/to/upload.txt")).thenThrow(new FileNotFoundException());
+        
+        sftpConnection.upload("local/file/to/upload.txt", "remote/directory");
+    }
+    
+    @Test
+    public void ifUploadFailsDuringPhysicalFileUploadTheSftpExceptionShouldBeCaughtAndRethrown() throws SftpException {
+        
+        expectedException.expect(FtpException.class);
+        expectedException.expectMessage(is(equalTo("Upload failed to complete.")));
+        
+        doThrow(new SftpException(0, null)).when(mockChannel).put(mockFileInputStream, "remote/directory");
+        
+        sftpConnection.upload("local/file/to/upload.txt", "remote/directory");
+    }
+    
     private Vector<LsEntry> createEntries() {
 
         Vector<LsEntry> vector = new Vector<LsEntry>();

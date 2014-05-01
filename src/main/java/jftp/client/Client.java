@@ -8,9 +8,6 @@ public abstract class Client {
 	protected String host;
 	protected int port;
 	
-	protected String proxyHostAddress;
-	protected int proxyPort;
-	
 	protected UserCredentials userCredentials = UserCredentials.ANONYMOUS;
 	
 	/**
@@ -35,17 +32,6 @@ public abstract class Client {
 	 */
 	public void setPort(int port) {
 		this.port = port;
-	}
-	
-	/**
-	 * 
-	 * @param proxyHostAddress
-	 * @param proxyPort
-	 */
-	public void setProxy(String proxyHostAddress, int proxyPort) {
-	    
-	    this.proxyHostAddress = proxyHostAddress;
-	    this.proxyPort = proxyPort;
 	}
 	
 	/**
