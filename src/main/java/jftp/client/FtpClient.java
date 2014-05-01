@@ -62,12 +62,15 @@ public class FtpClient extends Client {
 
         if (!hasLoggedIn)
             throw new FtpException(String.format(UNABLE_TO_LOGIN_MESSAGE, userCredentials.getUsername()));
+        
+        ftpClient.setFileType(FTPClient.BINARY_FILE_TYPE);
     }
 
-    private void setSpecificModesOnClient() {
+    private void setSpecificModesOnClient() throws IOException {
 
         ftpClient.enterLocalPassiveMode();
         ftpClient.setControlKeepAliveTimeout(FIVE_MINUTES);
+        ftpClient.setFileType(FTPClient.BINARY_FILE_TYPE);
     }
 
     private void connectClientAndCheckStatus() throws SocketException, IOException, FtpException {

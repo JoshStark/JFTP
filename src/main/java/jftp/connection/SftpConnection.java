@@ -1,6 +1,8 @@
 package jftp.connection;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -49,8 +51,8 @@ public class SftpConnection implements Connection {
         return listFiles(".");
     }
 
-    @SuppressWarnings("unchecked")
     @Override
+    @SuppressWarnings("unchecked")
     public List<FtpFile> listFiles(String relativePath) {
 
         List<FtpFile> files = new ArrayList<FtpFile>();
@@ -88,7 +90,11 @@ public class SftpConnection implements Connection {
         
         try {
             
-            channel.put(fileStreamFactory.createInputStream(localFilePath), remoteDirectory);
+            FileInputStream localFileInputStream = fileStreamFactory.createInputStream(localFilePath);
+            
+            channel.put(localFileInputStream, remoteDirectory);
+            
+            localFileInputStream.close();
             
         } catch (FileNotFoundException e) {
             
@@ -96,6 +102,9 @@ public class SftpConnection implements Connection {
         } catch (SftpException e) {
             
             throw new FtpException("Upload failed to complete.", e);
+        } catch (IOException e) {
+            
+            throw new FtpException("Upload may not have completed.", e);
         }
     }
 

@@ -14,6 +14,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.Vector;
 
@@ -24,8 +25,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
@@ -44,7 +47,10 @@ public class SftpConnectionTest {
     @InjectMocks
     private SftpConnection sftpConnection;
     
+    @Mock
     private FileInputStream mockFileInputStream;
+    
+    @Mock
     private FileOutputStream mockFileOutputStream;
     
     @Rule
@@ -208,6 +214,28 @@ public class SftpConnectionTest {
         expectedException.expectMessage(is(equalTo("Upload failed to complete.")));
         
         doThrow(new SftpException(0, null)).when(mockChannel).put(mockFileInputStream, "remote/directory");
+        
+        sftpConnection.upload("local/file/to/upload.txt", "remote/directory");
+    }
+    
+    @Test
+    public void theInputStreamUsedToUploadFileShouldBeClosedAfterUploadHasFinished() throws IOException, SftpException {
+        
+        sftpConnection.upload("local/file/to/upload.txt", "remote/directory");
+        
+        InOrder inOrder = Mockito.inOrder(mockChannel, mockFileInputStream);
+        
+        inOrder.verify(mockChannel).put(mockFileInputStream, "remote/directory");
+        inOrder.verify(mockFileInputStream).close();
+    }
+    
+    @Test
+    public void ifLocalFileInputStreamCannotBeClosedAfterUploadingThenTheExceptionShouldBeCaughtAndRethrown() throws IOException {
+        
+        expectedException.expect(FtpException.class);
+        expectedException.expectMessage(is(equalTo("Upload may not have completed.")));
+        
+        doThrow(new IOException()).when(mockFileInputStream).close();
         
         sftpConnection.upload("local/file/to/upload.txt", "remote/directory");
     }

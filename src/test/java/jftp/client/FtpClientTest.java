@@ -30,174 +30,184 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
-
 public class FtpClientTest {
 
-	@InjectMocks
-	public FtpClient ftpClient = new FtpClient();
+    @InjectMocks
+    public FtpClient ftpClient = new FtpClient();
 
-	@Mock
-	private FTPClient mockFtpClient;
+    @Mock
+    private FTPClient mockFtpClient;
 
-	@Mock
-	private ConnectionFactory mockConnectionFactory;
+    @Mock
+    private ConnectionFactory mockConnectionFactory;
 
-	@Rule
-	public ExpectedException expectedException = ExpectedException.none();
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
-	private String hostname;
-	private int port;
-	private UserCredentials userCredentials;
+    private String hostname;
+    private int port;
+    private UserCredentials userCredentials;
 
-	@Before
-	public void setUp() throws IOException {
-		initMocks(this);
+    @Before
+    public void setUp() throws IOException {
+        initMocks(this);
 
-		hostname = "this is a hostname";
-		port = 80;
-		
-		userCredentials = new UserCredentials("thisisausername", "thisisapassword");
+        hostname = "this is a hostname";
+        port = 80;
 
-		ftpClient.setHost(hostname);
-		ftpClient.setPort(port);
-		ftpClient.setCredentials(userCredentials);
+        userCredentials = new UserCredentials("thisisausername", "thisisapassword");
 
-		when(mockFtpClient.getReplyCode()).thenReturn(200);
-		when(mockFtpClient.login(userCredentials.getUsername(), userCredentials.getPassword())).thenReturn(true);
-		when(mockFtpClient.isConnected()).thenReturn(true);
-		
-		when(mockConnectionFactory.createFtpConnection(mockFtpClient)).thenReturn(new FtpConnection(mockFtpClient));
-	}
+        ftpClient.setHost(hostname);
+        ftpClient.setPort(port);
+        ftpClient.setCredentials(userCredentials);
 
-	@Test
-	public void newFtpClientShouldCreateFTPClientInstance() {
-	    assertThat(ftpClient.ftpClient, is(instanceOf(FTPClient.class)));
-	}
-	
-	@Test
-	public void connectMethodShouldCallonUnderlyingFtpClientConnectMethodWithHostname() throws SocketException, IOException {
+        when(mockFtpClient.getReplyCode()).thenReturn(200);
+        when(mockFtpClient.login(userCredentials.getUsername(), userCredentials.getPassword())).thenReturn(true);
+        when(mockFtpClient.isConnected()).thenReturn(true);
 
-		ftpClient.connect();
+        when(mockConnectionFactory.createFtpConnection(mockFtpClient)).thenReturn(new FtpConnection(mockFtpClient));
+    }
 
-		verify(mockFtpClient).connect(hostname, port);
-	}
+    @Test
+    public void newFtpClientShouldCreateFTPClientInstance() {
+        assertThat(ftpClient.ftpClient, is(instanceOf(FTPClient.class)));
+    }
 
-	@Test
-	public void connectMethodShouldEnterPassiveModeLoginToUnderlyingFtpClint() throws IOException {
+    @Test
+    public void connectMethodShouldCallonUnderlyingFtpClientConnectMethodWithHostname() throws SocketException, IOException {
 
-		ftpClient.connect();
+        ftpClient.connect();
 
-		InOrder inOrder = Mockito.inOrder(mockFtpClient);
+        verify(mockFtpClient).connect(hostname, port);
+    }
 
-		inOrder.verify(mockFtpClient).enterLocalPassiveMode();
-		inOrder.verify(mockFtpClient).login(userCredentials.getUsername(), userCredentials.getPassword());
-	}
+    @Test
+    public void connectMethodShouldEnterPassiveModeLoginToUnderlyingFtpClient() throws IOException {
 
-	@Test
-	public void connectMethodShouldSetKeepAliveCommandToEveryFiveMinutes() {
-		
-		ftpClient.connect();
-		
-		verify(mockFtpClient).setControlKeepAliveTimeout(300);
-	}
-	
-	@Test
-	public void connectMethodShouldReturnNewFtpConnectionTakingInUnderlyingFtpClient() {
+        ftpClient.connect();
 
-		Connection connection = ftpClient.connect();
+        InOrder inOrder = Mockito.inOrder(mockFtpClient);
 
-		verify(mockConnectionFactory).createFtpConnection(mockFtpClient);
-		assertThat(connection, is(instanceOf(FtpConnection.class)));
-	}
+        inOrder.verify(mockFtpClient).enterLocalPassiveMode();
+        inOrder.verify(mockFtpClient).login(userCredentials.getUsername(), userCredentials.getPassword());
+    }
 
-	@Test
-	public void disconnectMethodShouldCallOnUnderlyingFtpClientDisconnectMethod() throws IOException {
+    @Test
+    public void connectMethodShouldSetKeepAliveCommandToEveryFiveMinutes() {
 
-		ftpClient.disconnect();
+        ftpClient.connect();
 
-		verify(mockFtpClient).disconnect();
-	}
+        verify(mockFtpClient).setControlKeepAliveTimeout(300);
+    }
 
-	@Test
-	public void ifConnectionFailsThenCatchThrownExceptionAndThrowFtpException() throws SocketException,
-	        IOException {
+    @Test
+    public void onceLoggedInTheClientShouldHaveFileTypeSetToBinary() throws IOException {
+        
+        ftpClient.connect();
 
-		expectedException.expect(FtpException.class);
-		expectedException.expectMessage(is(equalTo("Unable to connect to host " + hostname + " on port " + port)));
+        InOrder inOrder = Mockito.inOrder(mockFtpClient);
+        
+        inOrder.verify(mockFtpClient).login(userCredentials.getUsername(), userCredentials.getPassword());
+        inOrder.verify(mockFtpClient).setFileType(FTPClient.BINARY_FILE_TYPE);
+    }
 
-		doThrow(new IOException()).when(mockFtpClient).connect(hostname, port);
+    @Test
+    public void connectMethodShouldReturnNewFtpConnectionTakingInUnderlyingFtpClient() {
 
-		ftpClient.connect();
-	}
+        Connection connection = ftpClient.connect();
 
-	@Test
-	public void ifConnectionFailsDueToUnknownHostThenCatchThrownExceptionAndThrowFtpException()
-	        throws SocketException, IOException {
+        verify(mockConnectionFactory).createFtpConnection(mockFtpClient);
+        assertThat(connection, is(instanceOf(FtpConnection.class)));
+    }
 
-		expectedException.expect(FtpException.class);
-		expectedException.expectMessage(is(equalTo("Unable to connect to host " + hostname + " on port " + port)));
+    @Test
+    public void disconnectMethodShouldCallOnUnderlyingFtpClientDisconnectMethod() throws IOException {
 
-		doThrow(new UnknownHostException()).when(mockFtpClient).connect(hostname, port);
+        ftpClient.disconnect();
 
-		ftpClient.connect();
-	}
-	
-	@Test
-	public void ifUnderlyingClientReturnsBadConnectionCodeThenThrowConnectionException() {
-		
-		expectedException.expect(FtpException.class);
-		expectedException.expectMessage(is(equalTo("The host " + hostname + " on port " + port + " returned a bad status code.")));
-		
-		when(mockFtpClient.getReplyCode()).thenReturn(500);
-		
-		ftpClient.connect();
-	}
-	
-	@Test
-	public void ifUnableToLoginToFtpClientThenThrowFtpException() throws IOException {
-		
-		expectedException.expect(FtpException.class);
-		expectedException.expectMessage(is(equalTo("Unable to login for user " + userCredentials.getUsername())));
-		
-		when(mockFtpClient.login(userCredentials.getUsername(), userCredentials.getPassword())).thenReturn(false);
-		
-		ftpClient.connect();
-	}
-	
-	@Test
-	public void whenDisconnectingThenClientShouldCheckToSeeIfAlreadyDisconnected() {
-		
-		ftpClient.disconnect();
-		
-		verify(mockFtpClient).isConnected();
-	}
-	
-	@Test
-	public void whenAlreadyDisconnectedThenClientShoudlNotCallOnUnderlyingClientDisconnectMethod() throws IOException {
-		
-		when(mockFtpClient.isConnected()).thenReturn(false);
-		
-		ftpClient.disconnect();
-		
-		verify(mockFtpClient, times(0)).disconnect();
-	}
-	
-	@Test
-	public void whenClientIsStillConnectedThenShouldCallOnUnderlyingClientDisconnectMethod() throws IOException {
-		
-		ftpClient.disconnect();
-		
-		verify(mockFtpClient).disconnect();
-	}
-	
-	@Test
-	public void ifUnderlyingClientThrowsExceptionWhenDisconnectingThenClientShouldCatchAndRethrow() throws IOException {
-		
-		expectedException.expect(FtpException.class);
-		expectedException.expectMessage(is(equalTo("There was an unexpected error while trying to disconnect.")));
-		
-		doThrow(new IOException()).when(mockFtpClient).disconnect();
-		
-		ftpClient.disconnect();		
-	}
+        verify(mockFtpClient).disconnect();
+    }
+
+    @Test
+    public void ifConnectionFailsThenCatchThrownExceptionAndThrowFtpException() throws SocketException, IOException {
+
+        expectedException.expect(FtpException.class);
+        expectedException.expectMessage(is(equalTo("Unable to connect to host " + hostname + " on port " + port)));
+
+        doThrow(new IOException()).when(mockFtpClient).connect(hostname, port);
+
+        ftpClient.connect();
+    }
+
+    @Test
+    public void ifConnectionFailsDueToUnknownHostThenCatchThrownExceptionAndThrowFtpException() throws SocketException,
+            IOException {
+
+        expectedException.expect(FtpException.class);
+        expectedException.expectMessage(is(equalTo("Unable to connect to host " + hostname + " on port " + port)));
+
+        doThrow(new UnknownHostException()).when(mockFtpClient).connect(hostname, port);
+
+        ftpClient.connect();
+    }
+
+    @Test
+    public void ifUnderlyingClientReturnsBadConnectionCodeThenThrowConnectionException() {
+
+        expectedException.expect(FtpException.class);
+        expectedException
+                .expectMessage(is(equalTo("The host " + hostname + " on port " + port + " returned a bad status code.")));
+
+        when(mockFtpClient.getReplyCode()).thenReturn(500);
+
+        ftpClient.connect();
+    }
+
+    @Test
+    public void ifUnableToLoginToFtpClientThenThrowFtpException() throws IOException {
+
+        expectedException.expect(FtpException.class);
+        expectedException.expectMessage(is(equalTo("Unable to login for user " + userCredentials.getUsername())));
+
+        when(mockFtpClient.login(userCredentials.getUsername(), userCredentials.getPassword())).thenReturn(false);
+
+        ftpClient.connect();
+    }
+
+    @Test
+    public void whenDisconnectingThenClientShouldCheckToSeeIfAlreadyDisconnected() {
+
+        ftpClient.disconnect();
+
+        verify(mockFtpClient).isConnected();
+    }
+
+    @Test
+    public void whenAlreadyDisconnectedThenClientShoudlNotCallOnUnderlyingClientDisconnectMethod() throws IOException {
+
+        when(mockFtpClient.isConnected()).thenReturn(false);
+
+        ftpClient.disconnect();
+
+        verify(mockFtpClient, times(0)).disconnect();
+    }
+
+    @Test
+    public void whenClientIsStillConnectedThenShouldCallOnUnderlyingClientDisconnectMethod() throws IOException {
+
+        ftpClient.disconnect();
+
+        verify(mockFtpClient).disconnect();
+    }
+
+    @Test
+    public void ifUnderlyingClientThrowsExceptionWhenDisconnectingThenClientShouldCatchAndRethrow() throws IOException {
+
+        expectedException.expect(FtpException.class);
+        expectedException.expectMessage(is(equalTo("There was an unexpected error while trying to disconnect.")));
+
+        doThrow(new IOException()).when(mockFtpClient).disconnect();
+
+        ftpClient.disconnect();
+    }
 }

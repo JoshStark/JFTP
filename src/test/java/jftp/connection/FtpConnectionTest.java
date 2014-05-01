@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -27,8 +28,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 
 public class FtpConnectionTest {
 
@@ -41,10 +44,13 @@ public class FtpConnectionTest {
     private FtpConnection ftpConnection;
 
     @Mock
-    private FileStreamFactory mockStreamFactory;
+    private FileStreamFactory mockFileStreamFactory;
 
     @Mock
-    private FileOutputStream mockOutputStream;
+    private FileInputStream mockFileInputStream;
+    
+    @Mock
+    private FileOutputStream mockFileOutputStream;
 
     private FTPClient mockFtpClient;
 
@@ -67,8 +73,11 @@ public class FtpConnectionTest {
         initMocks(this);
 
         when(mockFtpClient.listFiles(anyString())).thenReturn(files);
-        when(mockStreamFactory.createOutputStream(LOCAL_DIRECTORY + FILE_SEPARATOR + TEST_DOWNLOAD_FILE)).thenReturn(
-                mockOutputStream);
+        
+        when(mockFileStreamFactory.createInputStream(anyString())).thenReturn(mockFileInputStream);
+        when(mockFileStreamFactory.createOutputStream(anyString())).thenReturn(mockFileOutputStream);
+        
+        when(mockFtpClient.storeFile("remote/directory", mockFileInputStream)).thenReturn(true);
     }
 
     @Test
@@ -179,7 +188,7 @@ public class FtpConnectionTest {
 
         ftpConnection.download(file, LOCAL_DIRECTORY);
 
-        verify(mockFtpClient).retrieveFile(file.getFullPath(), mockOutputStream);
+        verify(mockFtpClient).retrieveFile(file.getFullPath(), mockFileOutputStream);
     }
 
     @Test
@@ -192,7 +201,7 @@ public class FtpConnectionTest {
         FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(),
                 false);
 
-        when(mockFtpClient.retrieveFile(file.getFullPath(), mockOutputStream)).thenThrow(new FileNotFoundException());
+        when(mockFtpClient.retrieveFile(file.getFullPath(), mockFileOutputStream)).thenThrow(new FileNotFoundException());
 
         ftpConnection.download(file, LOCAL_DIRECTORY);
     }
@@ -207,7 +216,7 @@ public class FtpConnectionTest {
         FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(),
                 false);
 
-        when(mockFtpClient.retrieveFile(file.getFullPath(), mockOutputStream)).thenThrow(new IOException());
+        when(mockFtpClient.retrieveFile(file.getFullPath(), mockFileOutputStream)).thenThrow(new IOException());
 
         ftpConnection.download(file, LOCAL_DIRECTORY);
     }
@@ -221,9 +230,39 @@ public class FtpConnectionTest {
         FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(),
                 false);
 
-        when(mockFtpClient.retrieveFile(file.getFullPath(), mockOutputStream)).thenReturn(false);
+        when(mockFtpClient.retrieveFile(file.getFullPath(), mockFileOutputStream)).thenReturn(false);
 
         ftpConnection.download(file, LOCAL_DIRECTORY);
+    }
+    
+    @Test
+    public void uploadingFileShouldCreateFileInputStreamAndPassIntoStoreFileMethodOnUnderlyingClient() throws IOException {
+        
+        ftpConnection.upload("local/file/path.txt", "remote/directory");
+        
+        verify(mockFtpClient).storeFile("remote/directory", mockFileInputStream);
+    }
+    
+    @Test
+    public void ifClientStoreFileReturnsFalseThenExceptionShouldBeThrown() throws IOException {
+        
+        expectedException.expect(FtpException.class);
+        expectedException.expectMessage(is(equalTo("Upload failed.")));
+        
+        when(mockFtpClient.storeFile("remote/directory", mockFileInputStream)).thenReturn(false);
+        
+        ftpConnection.upload("local/file/path.txt", "remote/directory");
+    }
+    
+    @Test
+    public void fileStreamShouldBeClosedAfterUploadAttempts() throws IOException {
+        
+        ftpConnection.upload("local/file/path.txt", "remote/directory");
+        
+        InOrder inOrder = Mockito.inOrder(mockFtpClient, mockFileInputStream);
+        
+        inOrder.verify(mockFtpClient).storeFile("remote/directory", mockFileInputStream);
+        inOrder.verify(mockFileInputStream).close();
     }
 
     private FTPFile[] createRemoteFTPFiles() {
