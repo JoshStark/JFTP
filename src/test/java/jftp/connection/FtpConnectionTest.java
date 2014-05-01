@@ -32,217 +32,221 @@ import org.junit.rules.ExpectedException;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-
 public class FtpConnectionTest {
 
-	private static final String LOCAL_DIRECTORY = ".";
+    private static final String LOCAL_DIRECTORY = ".";
     private static final String TEST_DOWNLOAD_FILE = "jUnit_Mock_File.txt";
-	private static final String DIRECTORY_PATH = "this/is/a/directory";
-	private static final String FILE_SEPARATOR = System.getProperty("file.separator");
+    private static final String DIRECTORY_PATH = "this/is/a/directory";
+    private static final String FILE_SEPARATOR = System.getProperty("file.separator");
 
-	@InjectMocks
-	private FtpConnection ftpConnection;
-	
-	@Mock
-	private FileStreamFactory mockStreamFactory;
+    @InjectMocks
+    private FtpConnection ftpConnection;
 
-	@Mock
-	private FileOutputStream mockOutputStream;
-	
-	private FTPClient mockFtpClient;
+    @Mock
+    private FileStreamFactory mockStreamFactory;
 
-	@Rule
-	public ExpectedException expectedException = ExpectedException.none();
+    @Mock
+    private FileOutputStream mockOutputStream;
 
-	@Before
-	public void setUp() throws IOException {
+    private FTPClient mockFtpClient;
 
-		mockFtpClient = mock(FTPClient.class);
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
-		when(mockFtpClient.changeWorkingDirectory(DIRECTORY_PATH)).thenReturn(true);
-		when(mockFtpClient.printWorkingDirectory()).thenReturn(DIRECTORY_PATH);
-		when(mockFtpClient.retrieveFile(anyString(), any(OutputStream.class))).thenReturn(true);
+    @Before
+    public void setUp() throws IOException {
 
-		FTPFile[] files = createRemoteFTPFiles();
+        mockFtpClient = mock(FTPClient.class);
 
-		ftpConnection = new FtpConnection(mockFtpClient);
-		
-		initMocks(this);
+        when(mockFtpClient.changeWorkingDirectory(DIRECTORY_PATH)).thenReturn(true);
+        when(mockFtpClient.printWorkingDirectory()).thenReturn(DIRECTORY_PATH);
+        when(mockFtpClient.retrieveFile(anyString(), any(OutputStream.class))).thenReturn(true);
 
-		when(mockFtpClient.listFiles(anyString())).thenReturn(files);
-		when(mockStreamFactory.createOutputStream(LOCAL_DIRECTORY)).thenReturn(mockOutputStream);
-	}
+        FTPFile[] files = createRemoteFTPFiles();
 
-	@Test
-	public void whenSettingDirectoryThenFtpClientShouldBeCalledToChangeDirectory() throws IOException {
+        ftpConnection = new FtpConnection(mockFtpClient);
 
-		ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
+        initMocks(this);
 
-		verify(mockFtpClient).changeWorkingDirectory(DIRECTORY_PATH);
-	}
+        when(mockFtpClient.listFiles(anyString())).thenReturn(files);
+        when(mockStreamFactory.createOutputStream(LOCAL_DIRECTORY + FILE_SEPARATOR + TEST_DOWNLOAD_FILE)).thenReturn(
+                mockOutputStream);
+    }
 
-	@Test
-	public void whenRemoteServerThrowsExceptionWhenChangingDirectoryThenConnectionShouldCatchAndRethrow() throws IOException {
+    @Test
+    public void whenSettingDirectoryThenFtpClientShouldBeCalledToChangeDirectory() throws IOException {
 
-		expectedException.expect(NoSuchDirectoryException.class);
-		expectedException.expectMessage(is(equalTo("Remote server was unable to change directory.")));
+        ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
 
-		when(mockFtpClient.changeWorkingDirectory(DIRECTORY_PATH)).thenThrow(new IOException());
+        verify(mockFtpClient).changeWorkingDirectory(DIRECTORY_PATH);
+    }
 
-		ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
-	}
+    @Test
+    public void whenRemoteServerThrowsExceptionWhenChangingDirectoryThenConnectionShouldCatchAndRethrow() throws IOException {
 
-	@Test
-	public void ifFtpClientReturnsFalseWhenChangingDirectoryThenThrowNoSuchDirectoryException() throws IOException {
+        expectedException.expect(NoSuchDirectoryException.class);
+        expectedException.expectMessage(is(equalTo("Remote server was unable to change directory.")));
 
-		expectedException.expect(NoSuchDirectoryException.class);
-		expectedException.expectMessage(is(equalTo("The directory this/is/a/directory doesn't exist on the remote server.")));
+        when(mockFtpClient.changeWorkingDirectory(DIRECTORY_PATH)).thenThrow(new IOException());
 
-		when(mockFtpClient.changeWorkingDirectory(DIRECTORY_PATH)).thenReturn(false);
+        ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
+    }
 
-		ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
-	}
+    @Test
+    public void ifFtpClientReturnsFalseWhenChangingDirectoryThenThrowNoSuchDirectoryException() throws IOException {
 
-	@Test
-	public void changingDirectoryShouldThenCallOnClientToGetWorkingDirectoryToSetFieldInConnection() throws IOException {
+        expectedException.expect(NoSuchDirectoryException.class);
+        expectedException.expectMessage(is(equalTo("The directory this/is/a/directory doesn't exist on the remote server.")));
 
-		ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
+        when(mockFtpClient.changeWorkingDirectory(DIRECTORY_PATH)).thenReturn(false);
 
-		verify(mockFtpClient).printWorkingDirectory();
-	}
+        ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
+    }
 
-	@Test
-	public void whenListingFilesThenFtpClientListFilesMethodShouldBeCalledForCurrentWorkingDirectory() throws IOException {
+    @Test
+    public void changingDirectoryShouldThenCallOnClientToGetWorkingDirectoryToSetFieldInConnection() throws IOException {
 
-		ftpConnection.listFiles();
+        ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
 
-		verify(mockFtpClient).listFiles(LOCAL_DIRECTORY);
-	}
+        verify(mockFtpClient).printWorkingDirectory();
+    }
 
-	@Test
-	public void ifWhenListingFilesFtpClientThrowsExceptionThenCatchAndRethrowFileListingExcepton() throws IOException {
+    @Test
+    public void whenListingFilesThenFtpClientListFilesMethodShouldBeCalledForCurrentWorkingDirectory() throws IOException {
 
-		expectedException.expect(FileListingException.class);
-		expectedException.expectMessage(is(equalTo("Unable to list files in directory .")));
+        ftpConnection.listFiles();
 
-		when(mockFtpClient.listFiles(LOCAL_DIRECTORY)).thenThrow(new IOException());
+        verify(mockFtpClient).listFiles(LOCAL_DIRECTORY);
+    }
 
-		ftpConnection.listFiles();
-	}
+    @Test
+    public void ifWhenListingFilesFtpClientThrowsExceptionThenCatchAndRethrowFileListingExcepton() throws IOException {
 
-	@Test
-	public void whenListingFilesThenFileArrayThatListFilesReturnsShouldBeConvertedToListOfFtpFilesAndReturned()
-	        throws IOException {
+        expectedException.expect(FileListingException.class);
+        expectedException.expectMessage(is(equalTo("Unable to list files in directory .")));
 
-		ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
+        when(mockFtpClient.listFiles(LOCAL_DIRECTORY)).thenThrow(new IOException());
 
-		List<FtpFile> returnedFiles = ftpConnection.listFiles();
+        ftpConnection.listFiles();
+    }
 
-		assertThat(returnedFiles.get(0).getName(), is(equalTo("File 1")));
-		assertThat(returnedFiles.get(0).getSize(), is(equalTo(1000l)));
-		assertThat(returnedFiles.get(0).getFullPath(), is(equalTo(DIRECTORY_PATH + "/File 1")));
-		assertThat(returnedFiles.get(0).isDirectory(), is(equalTo(false)));
+    @Test
+    public void whenListingFilesThenFileArrayThatListFilesReturnsShouldBeConvertedToListOfFtpFilesAndReturned()
+            throws IOException {
 
-		assertThat(returnedFiles.get(1).getName(), is(equalTo("File 2")));
-		assertThat(returnedFiles.get(1).getSize(), is(equalTo(2000l)));
-		assertThat(returnedFiles.get(1).getFullPath(), is(equalTo(DIRECTORY_PATH + "/File 2")));
-		assertThat(returnedFiles.get(1).isDirectory(), is(equalTo(true)));
-		
-		assertThat(returnedFiles.get(2).getName(), is(equalTo("File 3")));
-		assertThat(returnedFiles.get(2).getSize(), is(equalTo(3000l)));
-		assertThat(returnedFiles.get(2).getFullPath(), is(equalTo(DIRECTORY_PATH + "/File 3")));
-		assertThat(returnedFiles.get(2).isDirectory(), is(equalTo(false)));
-	}
+        ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
 
-	@Test
-	public void returnedFtpFilesShouldHaveCorrectModifiedDateTimesAgainstThem() {
+        List<FtpFile> returnedFiles = ftpConnection.listFiles();
 
-		List<FtpFile> files = ftpConnection.listFiles();
+        assertThat(returnedFiles.get(0).getName(), is(equalTo("File 1")));
+        assertThat(returnedFiles.get(0).getSize(), is(equalTo(1000l)));
+        assertThat(returnedFiles.get(0).getFullPath(), is(equalTo(DIRECTORY_PATH + "/File 1")));
+        assertThat(returnedFiles.get(0).isDirectory(), is(equalTo(false)));
 
-		assertThat(files.get(0).getLastModified().toString("dd/MM/yyyy HH:mm:ss"), is(equalTo("19/03/2014 21:40:00")));
-		assertThat(files.get(1).getLastModified().toString("dd/MM/yyyy HH:mm:ss"), is(equalTo("19/03/2014 21:40:00")));
-		assertThat(files.get(2).getLastModified().toString("dd/MM/yyyy HH:mm:ss"), is(equalTo("19/03/2014 21:40:00")));
-	}
-	
-	@Test
-	public void whenListingFilesAndGivingRelativePathThenThatPathShouldBeUsedAlongsideCurrentWorkingDir() throws IOException {
-	    
-	    ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
-	    ftpConnection.listFiles("relativePath");
-	    
-	    verify(mockFtpClient).listFiles("relativePath");
-	}
+        assertThat(returnedFiles.get(1).getName(), is(equalTo("File 2")));
+        assertThat(returnedFiles.get(1).getSize(), is(equalTo(2000l)));
+        assertThat(returnedFiles.get(1).getFullPath(), is(equalTo(DIRECTORY_PATH + "/File 2")));
+        assertThat(returnedFiles.get(1).isDirectory(), is(equalTo(true)));
 
-	@Test
-	public void downloadMethodShouldCallOnFtpClientRetrieveFilesMethodWithRemoteFilename() throws IOException {
+        assertThat(returnedFiles.get(2).getName(), is(equalTo("File 3")));
+        assertThat(returnedFiles.get(2).getSize(), is(equalTo(3000l)));
+        assertThat(returnedFiles.get(2).getFullPath(), is(equalTo(DIRECTORY_PATH + "/File 3")));
+        assertThat(returnedFiles.get(2).isDirectory(), is(equalTo(false)));
+    }
 
-		FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(), false);
+    @Test
+    public void returnedFtpFilesShouldHaveCorrectModifiedDateTimesAgainstThem() {
 
-		ftpConnection.download(file, LOCAL_DIRECTORY);
+        List<FtpFile> files = ftpConnection.listFiles();
 
-		verify(mockFtpClient).retrieveFile(file.getFullPath(), mockOutputStream);
-	}
+        assertThat(files.get(0).getLastModified().toString("dd/MM/yyyy HH:mm:ss"), is(equalTo("19/03/2014 21:40:00")));
+        assertThat(files.get(1).getLastModified().toString("dd/MM/yyyy HH:mm:ss"), is(equalTo("19/03/2014 21:40:00")));
+        assertThat(files.get(2).getLastModified().toString("dd/MM/yyyy HH:mm:ss"), is(equalTo("19/03/2014 21:40:00")));
+    }
 
-	@Test
-	public void downloadMethodShouldThrowExceptionIfUnableToOpenStreamToLocalFile() throws IOException {
+    @Test
+    public void whenListingFilesAndGivingRelativePathThenThatPathShouldBeUsedAlongsideCurrentWorkingDir() throws IOException {
 
-		expectedException.expect(DownloadFailedException.class);
-		expectedException
-		        .expectMessage(is(equalTo("Unable to write to local directory ." + FILE_SEPARATOR + TEST_DOWNLOAD_FILE)));
+        ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
+        ftpConnection.listFiles("relativePath");
 
-		FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(), false);
+        verify(mockFtpClient).listFiles("relativePath");
+    }
 
-		when(mockFtpClient.retrieveFile(file.getFullPath(), mockOutputStream)).thenThrow(new FileNotFoundException());
+    @Test
+    public void downloadMethodShouldCallOnFtpClientRetrieveFilesMethodWithRemoteFilename() throws IOException {
 
-		ftpConnection.download(file, LOCAL_DIRECTORY);
-	}
+        FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(),
+                false);
 
-	@Test
-	public void shouldDownloadFailForAnyReasonWhileInProgressThenCatchIOExceptionAndThrowNewDownloadFailedException()
-	        throws IOException {
+        ftpConnection.download(file, LOCAL_DIRECTORY);
 
-		expectedException.expect(DownloadFailedException.class);
-		expectedException.expectMessage(is(equalTo("Unable to download file " + TEST_DOWNLOAD_FILE)));
+        verify(mockFtpClient).retrieveFile(file.getFullPath(), mockOutputStream);
+    }
 
-		FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(), false);
+    @Test
+    public void downloadMethodShouldThrowExceptionIfUnableToOpenStreamToLocalFile() throws IOException {
 
-		when(mockFtpClient.retrieveFile(file.getFullPath(), mockOutputStream)).thenThrow(new IOException());
+        expectedException.expect(DownloadFailedException.class);
+        expectedException
+                .expectMessage(is(equalTo("Unable to write to local directory ." + FILE_SEPARATOR + TEST_DOWNLOAD_FILE)));
 
-		ftpConnection.download(file, LOCAL_DIRECTORY);
-	}
-	
-	@Test
-	public void ifRetrieveFileMethodInClientReturnsFalseThenThrowDownloadFailedException() throws IOException {
-		
-		expectedException.expect(DownloadFailedException.class);
-		expectedException.expectMessage(is(equalTo("Server returned failure while downloading.")));
+        FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(),
+                false);
 
-		FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(), false);
+        when(mockFtpClient.retrieveFile(file.getFullPath(), mockOutputStream)).thenThrow(new FileNotFoundException());
 
-		when(mockFtpClient.retrieveFile(file.getFullPath(), mockOutputStream)).thenReturn(false);
+        ftpConnection.download(file, LOCAL_DIRECTORY);
+    }
 
-		ftpConnection.download(file, LOCAL_DIRECTORY);
-	}
+    @Test
+    public void shouldDownloadFailForAnyReasonWhileInProgressThenCatchIOExceptionAndThrowNewDownloadFailedException()
+            throws IOException {
 
-	private FTPFile[] createRemoteFTPFiles() {
+        expectedException.expect(DownloadFailedException.class);
+        expectedException.expectMessage(is(equalTo("Unable to download file " + TEST_DOWNLOAD_FILE)));
 
-		Calendar calendar = Calendar.getInstance();
-		calendar.set(2014, 2, 19, 21, 40, 00);
+        FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(),
+                false);
 
-		FTPFile[] files = new FTPFile[3];
+        when(mockFtpClient.retrieveFile(file.getFullPath(), mockOutputStream)).thenThrow(new IOException());
 
-		for (int i = 0; i < 3; i++) {
+        ftpConnection.download(file, LOCAL_DIRECTORY);
+    }
 
-			FTPFile file = mock(FTPFile.class);
-			
-			when(file.getName()).thenReturn("File " + (i + 1));
-			when(file.getSize()).thenReturn((long)(i + 1) * 1000);
-			when(file.getTimestamp()).thenReturn(calendar);
-			when(file.isDirectory()).thenReturn((i + 1) % 2 == 0 ? true : false);
-			
-			files[i] = file;
-		}
+    @Test
+    public void ifRetrieveFileMethodInClientReturnsFalseThenThrowDownloadFailedException() throws IOException {
 
-		return files;
-	}
+        expectedException.expect(DownloadFailedException.class);
+        expectedException.expectMessage(is(equalTo("Server returned failure while downloading.")));
+
+        FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(),
+                false);
+
+        when(mockFtpClient.retrieveFile(file.getFullPath(), mockOutputStream)).thenReturn(false);
+
+        ftpConnection.download(file, LOCAL_DIRECTORY);
+    }
+
+    private FTPFile[] createRemoteFTPFiles() {
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(2014, 2, 19, 21, 40, 00);
+
+        FTPFile[] files = new FTPFile[3];
+
+        for (int i = 0; i < 3; i++) {
+
+            FTPFile file = mock(FTPFile.class);
+
+            when(file.getName()).thenReturn("File " + (i + 1));
+            when(file.getSize()).thenReturn((long) (i + 1) * 1000);
+            when(file.getTimestamp()).thenReturn(calendar);
+            when(file.isDirectory()).thenReturn((i + 1) % 2 == 0 ? true : false);
+
+            files[i] = file;
+        }
+
+        return files;
+    }
 }

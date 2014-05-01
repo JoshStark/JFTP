@@ -33,14 +33,8 @@ public class SftpClient extends Client {
 
 		try {
 
-			session = jsch.getSession(userCredentials.getUsername(), host, port);
-			session.setConfig("StrictHostKeyChecking", "no");
-			session.setPassword(userCredentials.getPassword());
-
-			session.connect();
-
-			channel = session.openChannel(SFTP);
-			channel.connect();
+			configureSessionAndConnect();
+			openChannelFromSession();
 
 		} catch (JSchException e) {
 			throw new ConnectionInitialisationException(String.format(CONNECTION_ERROR_MESSAGE, host, port), e);
@@ -48,14 +42,28 @@ public class SftpClient extends Client {
 
 		return connectionFactory.createSftpConnection(channel);
 	}
-
+	
 	public void disconnect() {
-		
-		if(null == channel || null == session)
-			throw new ClientDisconnectionException("The underlying connection was never initially made.");
-		
-		channel.disconnect();
-		session.disconnect();
+	    
+	    if(null == channel || null == session)
+	        throw new ClientDisconnectionException("The underlying connection was never initially made.");
+	    
+	    channel.disconnect();
+	    session.disconnect();
 	}
 
+    private void openChannelFromSession() throws JSchException {
+        
+        channel = session.openChannel(SFTP);
+        channel.connect();
+    }
+
+    private void configureSessionAndConnect() throws JSchException {
+        
+        session = jsch.getSession(userCredentials.getUsername(), host, port);
+        session.setConfig("StrictHostKeyChecking", "no");
+        session.setPassword(userCredentials.getPassword());
+
+        session.connect();
+    }
 }

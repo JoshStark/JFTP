@@ -1,6 +1,5 @@
 package jftp.connection;
 
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -22,11 +21,10 @@ public class SftpConnection implements Connection {
     private static final int MILLIS = 1000;
 
     private ChannelSftp channel;
-    private String currentDirectory;
+    private String currentDirectory = ".";
 
     public SftpConnection(ChannelSftp channel) {
         this.channel = channel;
-        this.currentDirectory = ".";
     }
 
     @Override
@@ -84,7 +82,7 @@ public class SftpConnection implements Connection {
     }
 
     @Override
-    public void upload(String localFilePath, String remoteDirectory) throws FileNotFoundException {
+    public void upload(String localFilePath, String remoteDirectory) {
         throw new NotImplementedException();
     }
 

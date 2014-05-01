@@ -27,11 +27,10 @@ public class FtpConnection implements Connection {
     private FTPClient client;
     private FileStreamFactory streamFactory = new FileStreamFactory();
     
-    private String currentDirectory;
+    private String currentDirectory = ".";
 
     public FtpConnection(FTPClient client) {
         this.client = client;
-        this.currentDirectory = ".";
     }
 
     @Override
@@ -85,7 +84,7 @@ public class FtpConnection implements Connection {
 
         try {
 
-            OutputStream outputStream = streamFactory.createOutputStream(localDirectory);
+            OutputStream outputStream = streamFactory.createOutputStream(localDestination);
 
             boolean hasDownloaded = client.retrieveFile(file.getFullPath(), outputStream);
 
@@ -102,7 +101,7 @@ public class FtpConnection implements Connection {
     }
 
     @Override
-    public void upload(String localFilePath, String remoteDirectory) throws FileNotFoundException {
+    public void upload(String localFilePath, String remoteDirectory) {
         
     }
 
