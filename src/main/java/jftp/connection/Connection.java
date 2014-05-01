@@ -1,5 +1,6 @@
 package jftp.connection;
 
+import java.io.FileNotFoundException;
 import java.util.List;
 
 
@@ -56,5 +57,5 @@ public interface Connection {
 	 * @param 
 	 * remoteDirectory
 	 */
-	void upload(String localFilePath, String remoteDirectory);
+	void upload(String localFilePath, String remoteDirectory) throws FileNotFoundException;
 }

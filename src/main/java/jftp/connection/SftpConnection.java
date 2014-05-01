@@ -1,13 +1,14 @@
 package jftp.connection;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import jftp.exception.DownloadFailedException;
 import jftp.exception.FileListingException;
 import jftp.exception.NoSuchDirectoryException;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
@@ -83,7 +84,7 @@ public class SftpConnection implements Connection {
     }
 
     @Override
-    public void upload(String localFilePath, String remoteDirectory) {
+    public void upload(String localFilePath, String remoteDirectory) throws FileNotFoundException {
         throw new NotImplementedException();
     }
 

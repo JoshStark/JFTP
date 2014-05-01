@@ -1,7 +1,6 @@
 package jftp.connection;
 
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -10,11 +9,10 @@ import java.util.List;
 import jftp.exception.DownloadFailedException;
 import jftp.exception.FileListingException;
 import jftp.exception.NoSuchDirectoryException;
+import jftp.util.FileStreamFactory;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
-
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class FtpConnection implements Connection {
 
@@ -27,6 +25,8 @@ public class FtpConnection implements Connection {
     private static final String FILE_SEPARATOR = System.getProperty("file.separator");
 
     private FTPClient client;
+    private FileStreamFactory streamFactory = new FileStreamFactory();
+    
     private String currentDirectory;
 
     public FtpConnection(FTPClient client) {
@@ -85,7 +85,7 @@ public class FtpConnection implements Connection {
 
         try {
 
-            OutputStream outputStream = new FileOutputStream(localDestination);
+            OutputStream outputStream = streamFactory.createOutputStream(localDirectory);
 
             boolean hasDownloaded = client.retrieveFile(file.getFullPath(), outputStream);
 
@@ -102,8 +102,8 @@ public class FtpConnection implements Connection {
     }
 
     @Override
-    public void upload(String localFilePath, String remoteDirectory) {
-        throw new NotImplementedException();
+    public void upload(String localFilePath, String remoteDirectory) throws FileNotFoundException {
+        
     }
 
     private void ensureFileHasSuccessfullyDownloaded(boolean hasDownloaded) {

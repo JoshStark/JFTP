@@ -5,44 +5,51 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
-import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Calendar;
 import java.util.List;
 
-import jftp.connection.FtpConnection;
-import jftp.connection.FtpFile;
 import jftp.exception.DownloadFailedException;
 import jftp.exception.FileListingException;
 import jftp.exception.NoSuchDirectoryException;
+import jftp.util.FileStreamFactory;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.joda.time.DateTime;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 
 
 public class FtpConnectionTest {
 
-	private static final String TEST_DOWNLOAD_FILE = "jUnit_Mock_File.txt";
+	private static final String LOCAL_DIRECTORY = ".";
+    private static final String TEST_DOWNLOAD_FILE = "jUnit_Mock_File.txt";
 	private static final String DIRECTORY_PATH = "this/is/a/directory";
 	private static final String FILE_SEPARATOR = System.getProperty("file.separator");
 
+	@InjectMocks
 	private FtpConnection ftpConnection;
-	private FTPClient mockFtpClient;
+	
+	@Mock
+	private FileStreamFactory mockStreamFactory;
 
-	private File jUnitTestFile;
+	@Mock
+	private FileOutputStream mockOutputStream;
+	
+	private FTPClient mockFtpClient;
 
 	@Rule
 	public ExpectedException expectedException = ExpectedException.none();
@@ -58,19 +65,12 @@ public class FtpConnectionTest {
 
 		FTPFile[] files = createRemoteFTPFiles();
 
-		when(mockFtpClient.listFiles(anyString())).thenReturn(files);
-
 		ftpConnection = new FtpConnection(mockFtpClient);
+		
+		initMocks(this);
 
-		jUnitTestFile = new File("." + FILE_SEPARATOR + TEST_DOWNLOAD_FILE);
-		jUnitTestFile.createNewFile();
-	}
-
-	@After
-	public void tearDown() throws Exception {
-
-		if (!jUnitTestFile.delete())
-			throw new Exception("Couldn't delete test file");
+		when(mockFtpClient.listFiles(anyString())).thenReturn(files);
+		when(mockStreamFactory.createOutputStream(LOCAL_DIRECTORY)).thenReturn(mockOutputStream);
 	}
 
 	@Test
@@ -116,7 +116,7 @@ public class FtpConnectionTest {
 
 		ftpConnection.listFiles();
 
-		verify(mockFtpClient).listFiles(".");
+		verify(mockFtpClient).listFiles(LOCAL_DIRECTORY);
 	}
 
 	@Test
@@ -125,7 +125,7 @@ public class FtpConnectionTest {
 		expectedException.expect(FileListingException.class);
 		expectedException.expectMessage(is(equalTo("Unable to list files in directory .")));
 
-		when(mockFtpClient.listFiles(".")).thenThrow(new IOException());
+		when(mockFtpClient.listFiles(LOCAL_DIRECTORY)).thenThrow(new IOException());
 
 		ftpConnection.listFiles();
 	}
@@ -178,9 +178,9 @@ public class FtpConnectionTest {
 
 		FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(), false);
 
-		ftpConnection.download(file, ".");
+		ftpConnection.download(file, LOCAL_DIRECTORY);
 
-		verify(mockFtpClient).retrieveFile(eq(file.getFullPath()), any(OutputStream.class));
+		verify(mockFtpClient).retrieveFile(file.getFullPath(), mockOutputStream);
 	}
 
 	@Test
@@ -192,9 +192,9 @@ public class FtpConnectionTest {
 
 		FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(), false);
 
-		when(mockFtpClient.retrieveFile(eq(file.getFullPath()), any(OutputStream.class))).thenThrow(new FileNotFoundException());
+		when(mockFtpClient.retrieveFile(file.getFullPath(), mockOutputStream)).thenThrow(new FileNotFoundException());
 
-		ftpConnection.download(file, ".");
+		ftpConnection.download(file, LOCAL_DIRECTORY);
 	}
 
 	@Test
@@ -206,9 +206,9 @@ public class FtpConnectionTest {
 
 		FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(), false);
 
-		when(mockFtpClient.retrieveFile(eq(file.getFullPath()), any(OutputStream.class))).thenThrow(new IOException());
+		when(mockFtpClient.retrieveFile(file.getFullPath(), mockOutputStream)).thenThrow(new IOException());
 
-		ftpConnection.download(file, ".");
+		ftpConnection.download(file, LOCAL_DIRECTORY);
 	}
 	
 	@Test
@@ -219,9 +219,9 @@ public class FtpConnectionTest {
 
 		FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(), false);
 
-		when(mockFtpClient.retrieveFile(eq(file.getFullPath()), any(OutputStream.class))).thenReturn(false);
+		when(mockFtpClient.retrieveFile(file.getFullPath(), mockOutputStream)).thenReturn(false);
 
-		ftpConnection.download(file, ".");
+		ftpConnection.download(file, LOCAL_DIRECTORY);
 	}
 
 	private FTPFile[] createRemoteFTPFiles() {
