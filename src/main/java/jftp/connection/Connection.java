@@ -11,6 +11,9 @@ public interface Connection {
 	 * 
 	 * @param 
 	 * directory - The directory to change to. Equivalent of a 'cd' command.
+     *  
+     * @throws
+     * FtpException
 	 */
 	void setRemoteDirectory(String directory);
 	
@@ -19,6 +22,9 @@ public interface Connection {
 	 * 
 	 * @return 
 	 * A list of FtpFiles detailing what is in the current working directory.
+     *  
+     * @throws
+     * FtpException
 	 */
 	List<FtpFile> listFiles();
 		
@@ -33,6 +39,9 @@ public interface Connection {
 	 * 
 	 * @return 
 	 * A list of FtpFiles within relative path.
+	 *
+     * @throws
+     * FtpException
 	 */
 	List<FtpFile> listFiles(String path);
 	
@@ -40,10 +49,14 @@ public interface Connection {
 	 * Downloads the given file to the given local directory.
 	 * 
 	 * @param 
-	 * file File/Directory to download
+	 * file file/directory to download
 	 * 
 	 * @param 
-	 * localDirectory Local directory to download item to.
+	 * localDirectory Local directory to download item to. This should NOT include the file name as this method
+	 * will handle the creation of the file for the physical download. 
+	 * 
+     * @throws
+     * FtpException
 	 */
 	void download(FtpFile file, String localDirectory);
 	
@@ -55,6 +68,9 @@ public interface Connection {
 	 * 
 	 * @param 
 	 * remoteDirectory
+	 *  
+     * @throws
+     * FtpException
 	 */
 	void upload(String localFilePath, String remoteDirectory);
 }

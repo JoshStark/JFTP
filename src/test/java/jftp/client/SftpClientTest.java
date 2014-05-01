@@ -9,13 +9,11 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
-import jftp.client.SftpClient;
 import jftp.client.auth.UserCredentials;
 import jftp.connection.Connection;
 import jftp.connection.ConnectionFactory;
 import jftp.connection.SftpConnection;
-import jftp.exception.ClientDisconnectionException;
-import jftp.exception.ConnectionInitialisationException;
+import jftp.exception.FtpException;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -101,7 +99,7 @@ public class SftpClientTest {
 	@Test
 	public void ifForAnyReasonTheUnderlyingSessionCantConnectThenCatchTheExceptionAndRethrow() throws JSchException {
 		
-		expectedException.expect(ConnectionInitialisationException.class);
+		expectedException.expect(FtpException.class);
 		expectedException.expectMessage(is(equalTo(String.format(CONNECTION_ERROR_MESSAGE, "host", 999))));
 		
 		Session mockSession = mockJsch.getSession("user", "host", 999);
@@ -145,7 +143,7 @@ public class SftpClientTest {
 	@Test
 	public void disconnectMethodShouldThrowExceptionWhenNotInitiallyConnected() {
 		
-		expectedException.expect(ClientDisconnectionException.class);
+		expectedException.expect(FtpException.class);
 		expectedException.expectMessage(is(equalTo("The underlying connection was never initially made.")));
 		
 		sftpClient.disconnect();

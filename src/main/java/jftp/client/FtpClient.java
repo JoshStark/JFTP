@@ -5,8 +5,7 @@ import java.net.SocketException;
 
 import jftp.connection.Connection;
 import jftp.connection.ConnectionFactory;
-import jftp.exception.ClientDisconnectionException;
-import jftp.exception.ConnectionInitialisationException;
+import jftp.exception.FtpException;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
@@ -36,7 +35,7 @@ public class FtpClient extends Client {
             login();
 
         } catch (IOException e) {
-            throw new ConnectionInitialisationException(String.format(CONNECTION_ERROR_MESSAGE, host, port), e);
+            throw new FtpException(String.format(CONNECTION_ERROR_MESSAGE, host, port), e);
         }
 
         return connectionFactory.createFtpConnection(ftpClient);
@@ -47,22 +46,22 @@ public class FtpClient extends Client {
         try {
             
             if (null == ftpClient)
-                throw new ClientDisconnectionException("The underlying client was null.");
+                throw new FtpException("The underlying client was null.");
             
             if (ftpClient.isConnected())
                 ftpClient.disconnect();
             
         } catch (IOException e) {
-            throw new ClientDisconnectionException("There was an unexpected error while trying to disconnect.", e);
+            throw new FtpException("There was an unexpected error while trying to disconnect.", e);
         }
     }
 
-    private void login() throws IOException, ConnectionInitialisationException {
+    private void login() throws IOException, FtpException {
 
         boolean hasLoggedIn = ftpClient.login(userCredentials.getUsername(), userCredentials.getPassword());
 
         if (!hasLoggedIn)
-            throw new ConnectionInitialisationException(String.format(UNABLE_TO_LOGIN_MESSAGE, userCredentials.getUsername()));
+            throw new FtpException(String.format(UNABLE_TO_LOGIN_MESSAGE, userCredentials.getUsername()));
     }
 
     private void setSpecificModesOnClient() {
@@ -71,11 +70,11 @@ public class FtpClient extends Client {
         ftpClient.setControlKeepAliveTimeout(FIVE_MINUTES);
     }
 
-    private void connectClientAndCheckStatus() throws SocketException, IOException, ConnectionInitialisationException {
+    private void connectClientAndCheckStatus() throws SocketException, IOException, FtpException {
 
         ftpClient.connect(host, port);
 
         if (!FTPReply.isPositiveCompletion(ftpClient.getReplyCode()))
-            throw new ConnectionInitialisationException(String.format(STATUS_ERROR_MESSAGE, host, port));
+            throw new FtpException(String.format(STATUS_ERROR_MESSAGE, host, port));
     }
 }

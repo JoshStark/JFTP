@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
-import jftp.exception.DownloadFailedException;
-import jftp.exception.FileListingException;
-import jftp.exception.NoSuchDirectoryException;
+import jftp.exception.FtpException;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import com.jcraft.jsch.ChannelSftp;
@@ -37,7 +35,7 @@ public class SftpConnection implements Connection {
 
         } catch (SftpException e) {
 
-            throw new NoSuchDirectoryException(String.format(DIRECTORY_DOES_NOT_EXIST_MESSAGE, directory), e);
+            throw new FtpException(String.format(DIRECTORY_DOES_NOT_EXIST_MESSAGE, directory), e);
         }
     }
 
@@ -62,7 +60,7 @@ public class SftpConnection implements Connection {
 
         } catch (SftpException e) {
 
-            throw new FileListingException("Unable to list files in directory " + currentDirectory, e);
+            throw new FtpException("Unable to list files in directory " + currentDirectory, e);
         }
 
         return files;
@@ -77,7 +75,7 @@ public class SftpConnection implements Connection {
 
         } catch (SftpException e) {
 
-            throw new DownloadFailedException("Unable to download file " + file.getName(), e);
+            throw new FtpException("Unable to download file " + file.getName(), e);
         }
     }
 

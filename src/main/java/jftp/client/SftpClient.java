@@ -2,8 +2,7 @@ package jftp.client;
 
 import jftp.connection.Connection;
 import jftp.connection.ConnectionFactory;
-import jftp.exception.ClientDisconnectionException;
-import jftp.exception.ConnectionInitialisationException;
+import jftp.exception.FtpException;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.JSch;
@@ -37,7 +36,7 @@ public class SftpClient extends Client {
 			openChannelFromSession();
 
 		} catch (JSchException e) {
-			throw new ConnectionInitialisationException(String.format(CONNECTION_ERROR_MESSAGE, host, port), e);
+			throw new FtpException(String.format(CONNECTION_ERROR_MESSAGE, host, port), e);
 		}
 
 		return connectionFactory.createSftpConnection(channel);
@@ -46,7 +45,7 @@ public class SftpClient extends Client {
 	public void disconnect() {
 	    
 	    if(null == channel || null == session)
-	        throw new ClientDisconnectionException("The underlying connection was never initially made.");
+	        throw new FtpException("The underlying connection was never initially made.");
 	    
 	    channel.disconnect();
 	    session.disconnect();

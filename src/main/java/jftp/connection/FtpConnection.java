@@ -6,9 +6,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import jftp.exception.DownloadFailedException;
-import jftp.exception.FileListingException;
-import jftp.exception.NoSuchDirectoryException;
+import jftp.exception.FtpException;
 import jftp.util.FileStreamFactory;
 
 import org.apache.commons.net.ftp.FTPClient;
@@ -41,13 +39,13 @@ public class FtpConnection implements Connection {
             boolean success = client.changeWorkingDirectory(directory);
 
             if (!success)
-                throw new NoSuchDirectoryException(String.format(NO_SUCH_DIRECTORY_MESSAGE, directory));
+                throw new FtpException(String.format(NO_SUCH_DIRECTORY_MESSAGE, directory));
 
             currentDirectory = client.printWorkingDirectory();
 
         } catch (IOException e) {
 
-            throw new NoSuchDirectoryException(UNABLE_TO_CD_MESSAGE, e);
+            throw new FtpException(UNABLE_TO_CD_MESSAGE, e);
         }
     }
 
@@ -71,7 +69,7 @@ public class FtpConnection implements Connection {
 
         } catch (IOException e) {
 
-            throw new FileListingException(String.format(FILE_LISTING_ERROR_MESSAGE, relativePath), e);
+            throw new FtpException(String.format(FILE_LISTING_ERROR_MESSAGE, relativePath), e);
         }
 
         return files;
@@ -93,10 +91,10 @@ public class FtpConnection implements Connection {
             ensureFileHasSuccessfullyDownloaded(hasDownloaded);
 
         } catch (FileNotFoundException e) {
-            throw new DownloadFailedException(String.format(FILE_STREAM_OPEN_FAIL_MESSAGE, localDestination), e);
+            throw new FtpException(String.format(FILE_STREAM_OPEN_FAIL_MESSAGE, localDestination), e);
 
         } catch (IOException e) {
-            throw new DownloadFailedException(String.format(FILE_DOWNLOAD_FAILURE_MESSAGE, file.getName()), e);
+            throw new FtpException(String.format(FILE_DOWNLOAD_FAILURE_MESSAGE, file.getName()), e);
         }
     }
 
@@ -108,7 +106,7 @@ public class FtpConnection implements Connection {
     private void ensureFileHasSuccessfullyDownloaded(boolean hasDownloaded) {
 
         if (!hasDownloaded)
-            throw new DownloadFailedException("Server returned failure while downloading.");
+            throw new FtpException("Server returned failure while downloading.");
     }
 
     private FtpFile toFtpFile(FTPFile ftpFile) {

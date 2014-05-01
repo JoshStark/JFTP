@@ -18,8 +18,7 @@ import jftp.client.auth.UserCredentials;
 import jftp.connection.Connection;
 import jftp.connection.ConnectionFactory;
 import jftp.connection.FtpConnection;
-import jftp.exception.ClientDisconnectionException;
-import jftp.exception.ConnectionInitialisationException;
+import jftp.exception.FtpException;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.junit.Before;
@@ -120,10 +119,10 @@ public class FtpClientTest {
 	}
 
 	@Test
-	public void ifConnectionFailsThenCatchThrownExceptionAndThrowConnectionInitialisationException() throws SocketException,
+	public void ifConnectionFailsThenCatchThrownExceptionAndThrowFtpException() throws SocketException,
 	        IOException {
 
-		expectedException.expect(ConnectionInitialisationException.class);
+		expectedException.expect(FtpException.class);
 		expectedException.expectMessage(is(equalTo("Unable to connect to host " + hostname + " on port " + port)));
 
 		doThrow(new IOException()).when(mockFtpClient).connect(hostname, port);
@@ -132,10 +131,10 @@ public class FtpClientTest {
 	}
 
 	@Test
-	public void ifConnectionFailsDueToUnknownHostThenCatchThrownExceptionAndThrowConnectionInitialisationException()
+	public void ifConnectionFailsDueToUnknownHostThenCatchThrownExceptionAndThrowFtpException()
 	        throws SocketException, IOException {
 
-		expectedException.expect(ConnectionInitialisationException.class);
+		expectedException.expect(FtpException.class);
 		expectedException.expectMessage(is(equalTo("Unable to connect to host " + hostname + " on port " + port)));
 
 		doThrow(new UnknownHostException()).when(mockFtpClient).connect(hostname, port);
@@ -146,7 +145,7 @@ public class FtpClientTest {
 	@Test
 	public void ifUnderlyingClientReturnsBadConnectionCodeThenThrowConnectionException() {
 		
-		expectedException.expect(ConnectionInitialisationException.class);
+		expectedException.expect(FtpException.class);
 		expectedException.expectMessage(is(equalTo("The host " + hostname + " on port " + port + " returned a bad status code.")));
 		
 		when(mockFtpClient.getReplyCode()).thenReturn(500);
@@ -155,9 +154,9 @@ public class FtpClientTest {
 	}
 	
 	@Test
-	public void ifUnableToLoginToFtpClientThenThrowConnectionInitialisationException() throws IOException {
+	public void ifUnableToLoginToFtpClientThenThrowFtpException() throws IOException {
 		
-		expectedException.expect(ConnectionInitialisationException.class);
+		expectedException.expect(FtpException.class);
 		expectedException.expectMessage(is(equalTo("Unable to login for user " + userCredentials.getUsername())));
 		
 		when(mockFtpClient.login(userCredentials.getUsername(), userCredentials.getPassword())).thenReturn(false);
@@ -194,7 +193,7 @@ public class FtpClientTest {
 	@Test
 	public void ifUnderlyingClientThrowsExceptionWhenDisconnectingThenClientShouldCatchAndRethrow() throws IOException {
 		
-		expectedException.expect(ClientDisconnectionException.class);
+		expectedException.expect(FtpException.class);
 		expectedException.expectMessage(is(equalTo("There was an unexpected error while trying to disconnect.")));
 		
 		doThrow(new IOException()).when(mockFtpClient).disconnect();

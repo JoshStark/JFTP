@@ -17,9 +17,7 @@ import java.io.OutputStream;
 import java.util.Calendar;
 import java.util.List;
 
-import jftp.exception.DownloadFailedException;
-import jftp.exception.FileListingException;
-import jftp.exception.NoSuchDirectoryException;
+import jftp.exception.FtpException;
 import jftp.util.FileStreamFactory;
 
 import org.apache.commons.net.ftp.FTPClient;
@@ -84,7 +82,7 @@ public class FtpConnectionTest {
     @Test
     public void whenRemoteServerThrowsExceptionWhenChangingDirectoryThenConnectionShouldCatchAndRethrow() throws IOException {
 
-        expectedException.expect(NoSuchDirectoryException.class);
+        expectedException.expect(FtpException.class);
         expectedException.expectMessage(is(equalTo("Remote server was unable to change directory.")));
 
         when(mockFtpClient.changeWorkingDirectory(DIRECTORY_PATH)).thenThrow(new IOException());
@@ -95,7 +93,7 @@ public class FtpConnectionTest {
     @Test
     public void ifFtpClientReturnsFalseWhenChangingDirectoryThenThrowNoSuchDirectoryException() throws IOException {
 
-        expectedException.expect(NoSuchDirectoryException.class);
+        expectedException.expect(FtpException.class);
         expectedException.expectMessage(is(equalTo("The directory this/is/a/directory doesn't exist on the remote server.")));
 
         when(mockFtpClient.changeWorkingDirectory(DIRECTORY_PATH)).thenReturn(false);
@@ -122,7 +120,7 @@ public class FtpConnectionTest {
     @Test
     public void ifWhenListingFilesFtpClientThrowsExceptionThenCatchAndRethrowFileListingExcepton() throws IOException {
 
-        expectedException.expect(FileListingException.class);
+        expectedException.expect(FtpException.class);
         expectedException.expectMessage(is(equalTo("Unable to list files in directory .")));
 
         when(mockFtpClient.listFiles(LOCAL_DIRECTORY)).thenThrow(new IOException());
@@ -187,7 +185,7 @@ public class FtpConnectionTest {
     @Test
     public void downloadMethodShouldThrowExceptionIfUnableToOpenStreamToLocalFile() throws IOException {
 
-        expectedException.expect(DownloadFailedException.class);
+        expectedException.expect(FtpException.class);
         expectedException
                 .expectMessage(is(equalTo("Unable to write to local directory ." + FILE_SEPARATOR + TEST_DOWNLOAD_FILE)));
 
@@ -203,7 +201,7 @@ public class FtpConnectionTest {
     public void shouldDownloadFailForAnyReasonWhileInProgressThenCatchIOExceptionAndThrowNewDownloadFailedException()
             throws IOException {
 
-        expectedException.expect(DownloadFailedException.class);
+        expectedException.expect(FtpException.class);
         expectedException.expectMessage(is(equalTo("Unable to download file " + TEST_DOWNLOAD_FILE)));
 
         FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(),
@@ -217,7 +215,7 @@ public class FtpConnectionTest {
     @Test
     public void ifRetrieveFileMethodInClientReturnsFalseThenThrowDownloadFailedException() throws IOException {
 
-        expectedException.expect(DownloadFailedException.class);
+        expectedException.expect(FtpException.class);
         expectedException.expectMessage(is(equalTo("Server returned failure while downloading.")));
 
         FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(),

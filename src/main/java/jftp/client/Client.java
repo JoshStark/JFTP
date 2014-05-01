@@ -2,7 +2,6 @@ package jftp.client;
 
 import jftp.client.auth.UserCredentials;
 import jftp.connection.Connection;
-import jftp.exception.ConnectionInitialisationException;
 
 public abstract class Client {
 

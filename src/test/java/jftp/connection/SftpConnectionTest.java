@@ -13,11 +13,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Vector;
 
-import jftp.connection.FtpFile;
-import jftp.connection.SftpConnection;
-import jftp.exception.DownloadFailedException;
-import jftp.exception.FileListingException;
-import jftp.exception.NoSuchDirectoryException;
+import jftp.exception.FtpException;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -64,7 +60,7 @@ public class SftpConnectionTest {
     @Test
     public void whenDirectoryDoesNotExistThenNoSuchDirectoryExceptionShouldBeThrown() throws SftpException {
 
-        expectedException.expect(NoSuchDirectoryException.class);
+        expectedException.expect(FtpException.class);
         expectedException.expectMessage(is(equalTo("Directory not/a/directory does not exist.")));
 
         String directory = "not/a/directory";
@@ -101,7 +97,7 @@ public class SftpConnectionTest {
     @Test
     public void whenLsCommandThrowsExceptionThenItShouldBeCaughtAndWrappedInFileListingExcepion() throws SftpException {
 
-        expectedException.expect(FileListingException.class);
+        expectedException.expect(FtpException.class);
         expectedException.expectMessage(is(equalTo("Unable to list files in directory .")));
 
         when(mockChannel.ls(".")).thenThrow(new SftpException(999, ""));
@@ -155,7 +151,7 @@ public class SftpConnectionTest {
     @Test
     public void downloadMethodShouldThrowDownloadFailedExceptionWhenChannelThrowsSftpConnection() throws SftpException {
 
-        expectedException.expect(DownloadFailedException.class);
+        expectedException.expect(FtpException.class);
         expectedException.expectMessage(is(equalTo("Unable to download file File Name.txt")));
 
         doThrow(new SftpException(999, "")).when(mockChannel).get(anyString(), anyString());
