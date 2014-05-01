@@ -13,7 +13,7 @@ Quick FTP Example
 Client client = new ClientFactory().createClient(ClientType.FTP);
 client.setHost("a.host.name");
 client.setPort(21);
-client.setCredentials("username", "password");
+client.setCredentials(new UserCredentials("username", "password");
 
 Connection connection = client.connect();
 connection.setRemoteDirectory("files/todownload");
