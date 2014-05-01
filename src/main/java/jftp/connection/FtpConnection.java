@@ -106,12 +106,11 @@ public class FtpConnection implements Connection {
             
             InputStream localFileInputStream = fileStreamFactory.createInputStream(localFilePath);
 
-            boolean uploadSuccess = client.storeFile(remoteDirectory, localFileInputStream);
+            boolean hasUploaded = client.storeFile(remoteDirectory, localFileInputStream);
 
             localFileInputStream.close();
 
-            if (!uploadSuccess)
-                throw new FtpException("Upload failed.");
+            ensureFileHasSuccessfullyUploaded(hasUploaded);
 
         } catch (FileNotFoundException e) {
             // TODO Auto-generated catch block
@@ -121,6 +120,12 @@ public class FtpConnection implements Connection {
             e.printStackTrace();
         }
 
+    }
+
+    private void ensureFileHasSuccessfullyUploaded(boolean hasUploaded) {
+        
+        if (!hasUploaded)
+            throw new FtpException("Upload failed.");
     }
 
     private void ensureFileHasSuccessfullyDownloaded(boolean hasDownloaded) {
