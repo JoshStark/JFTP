@@ -193,7 +193,7 @@ public class SftpConnectionTest {
         
         sftpConnection.upload("local/file/to/upload.txt", "remote/directory");
         
-        verify(mockChannel).put(mockFileInputStream, "remote/directory");
+        verify(mockChannel).put(mockFileInputStream, "remote/directory/upload.txt");
     }
     
     @Test
@@ -213,7 +213,7 @@ public class SftpConnectionTest {
         expectedException.expect(FtpException.class);
         expectedException.expectMessage(is(equalTo("Upload failed to complete.")));
         
-        doThrow(new SftpException(0, null)).when(mockChannel).put(mockFileInputStream, "remote/directory");
+        doThrow(new SftpException(0, null)).when(mockChannel).put(mockFileInputStream, "remote/directory/upload.txt");
         
         sftpConnection.upload("local/file/to/upload.txt", "remote/directory");
     }
@@ -225,7 +225,7 @@ public class SftpConnectionTest {
         
         InOrder inOrder = Mockito.inOrder(mockChannel, mockFileInputStream);
         
-        inOrder.verify(mockChannel).put(mockFileInputStream, "remote/directory");
+        inOrder.verify(mockChannel).put(mockFileInputStream, "remote/directory/upload.txt");
         inOrder.verify(mockFileInputStream).close();
     }
     

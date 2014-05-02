@@ -48,7 +48,7 @@ public class FtpConnectionTest {
 
     @Mock
     private FileInputStream mockFileInputStream;
-    
+
     @Mock
     private FileOutputStream mockFileOutputStream;
 
@@ -73,11 +73,11 @@ public class FtpConnectionTest {
         initMocks(this);
 
         when(mockFtpClient.listFiles(anyString())).thenReturn(files);
-        
+
         when(mockFileStreamFactory.createInputStream(anyString())).thenReturn(mockFileInputStream);
         when(mockFileStreamFactory.createOutputStream(anyString())).thenReturn(mockFileOutputStream);
-        
-        when(mockFtpClient.storeFile("remote/directory", mockFileInputStream)).thenReturn(true);
+
+        when(mockFtpClient.storeFile("remote/directory/path.txt", mockFileInputStream)).thenReturn(true);
     }
 
     @Test
@@ -234,35 +234,65 @@ public class FtpConnectionTest {
 
         ftpConnection.download(file, LOCAL_DIRECTORY);
     }
-    
+
     @Test
     public void uploadingFileShouldCreateFileInputStreamAndPassIntoStoreFileMethodOnUnderlyingClient() throws IOException {
-        
+
         ftpConnection.upload("local/file/path.txt", "remote/directory");
-        
-        verify(mockFtpClient).storeFile("remote/directory", mockFileInputStream);
+
+        verify(mockFtpClient).storeFile("remote/directory/path.txt", mockFileInputStream);
     }
-    
+
     @Test
     public void ifClientStoreFileReturnsFalseThenExceptionShouldBeThrown() throws IOException {
-        
+
         expectedException.expect(FtpException.class);
         expectedException.expectMessage(is(equalTo("Upload failed.")));
-        
-        when(mockFtpClient.storeFile("remote/directory", mockFileInputStream)).thenReturn(false);
-        
+
+        when(mockFtpClient.storeFile("remote/directory/path.txt", mockFileInputStream)).thenReturn(false);
+
         ftpConnection.upload("local/file/path.txt", "remote/directory");
+    }
+
+    @Test
+    public void clientUploadShouldBeSafeWhenIncludingDirectorySlashAtEndofPath() throws IOException {
+        
+        ftpConnection.upload("local/file/path.txt", "remote/directory/");
+
+        verify(mockFtpClient).storeFile("remote/directory/path.txt", mockFileInputStream);
+    }
+
+    @Test
+    public void fileStreamShouldBeClosedAfterUploadAttempts() throws IOException {
+
+        ftpConnection.upload("local/file/path.txt", "remote/directory");
+
+        InOrder inOrder = Mockito.inOrder(mockFtpClient, mockFileInputStream);
+
+        inOrder.verify(mockFtpClient).storeFile("remote/directory/path.txt", mockFileInputStream);
+        inOrder.verify(mockFileInputStream).close();
     }
     
     @Test
-    public void fileStreamShouldBeClosedAfterUploadAttempts() throws IOException {
+    public void ifStreamCannotBeOpenedWhileUploadingThenExceptionShouldBeCaughtAndRethrown() throws FileNotFoundException {
         
-        ftpConnection.upload("local/file/path.txt", "remote/directory");
+        expectedException.expect(FtpException.class);
+        expectedException.expectMessage(is(equalTo("Could not find file: local/file/to/upload.txt")));
         
-        InOrder inOrder = Mockito.inOrder(mockFtpClient, mockFileInputStream);
+        when(mockFileStreamFactory.createInputStream("local/file/to/upload.txt")).thenThrow(new FileNotFoundException());
         
-        inOrder.verify(mockFtpClient).storeFile("remote/directory", mockFileInputStream);
-        inOrder.verify(mockFileInputStream).close();
+        ftpConnection.upload("local/file/to/upload.txt", "remote/directory");
+    }
+    
+    @Test
+    public void ifUploadingIsInterruptedByAnIOIssueThenExceptionShouldBeCaughtAndRethrown() throws IOException {
+        
+        expectedException.expect(FtpException.class);
+        expectedException.expectMessage(is(equalTo("Upload may not have completed.")));
+        
+        when(mockFtpClient.storeFile("remote/directory/upload.txt", mockFileInputStream)).thenThrow(new IOException());
+        
+        ftpConnection.upload("local/file/to/upload.txt", "remote/directory");
     }
 
     private FTPFile[] createRemoteFTPFiles() {

@@ -2,6 +2,8 @@ package jftp.connection;
 
 import java.util.List;
 
+import jftp.exception.FtpException;
+
 
 public interface Connection {
 
@@ -67,7 +69,8 @@ public interface Connection {
 	 * localFilePath Local file/directory to upload.
 	 * 
 	 * @param 
-	 * remoteDirectory
+	 * remoteDirectory This is the remote directory that the local file will be uploaded to. The path supplied must be
+	 * a valid directory (not including file name).
 	 *  
      * @throws
      * FtpException

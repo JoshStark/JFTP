@@ -4,6 +4,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +17,7 @@ import org.apache.commons.net.ftp.FTPFile;
 
 public class FtpConnection implements Connection {
 
+    private static final String COULD_NOT_FIND_FILE_MESSAGE = "Could not find file: %s";
     private static final String FILE_DOWNLOAD_FAILURE_MESSAGE = "Unable to download file %s";
     private static final String FILE_STREAM_OPEN_FAIL_MESSAGE = "Unable to write to local directory %s";
     private static final String FILE_LISTING_ERROR_MESSAGE = "Unable to list files in directory %s";
@@ -77,7 +80,7 @@ public class FtpConnection implements Connection {
     }
 
     @Override
-    public void download(FtpFile file, String localDirectory) {
+    public void download(FtpFile file, String localDirectory) throws FtpException {
 
         String localDestination = String.format("%s%s%s", localDirectory, FILE_SEPARATOR, file.getName());
 
@@ -92,38 +95,50 @@ public class FtpConnection implements Connection {
             ensureFileHasSuccessfullyDownloaded(hasDownloaded);
 
         } catch (FileNotFoundException e) {
+            
             throw new FtpException(String.format(FILE_STREAM_OPEN_FAIL_MESSAGE, localDestination), e);
 
         } catch (IOException e) {
+            
             throw new FtpException(String.format(FILE_DOWNLOAD_FAILURE_MESSAGE, file.getName()), e);
         }
     }
 
     @Override
-    public void upload(String localFilePath, String remoteDirectory) {
+    public void upload(String localFilePath, String remoteDirectory)  throws FtpException {
 
         try {
-            
+
             InputStream localFileInputStream = fileStreamFactory.createInputStream(localFilePath);
 
-            boolean hasUploaded = client.storeFile(remoteDirectory, localFileInputStream);
+            boolean hasUploaded = client.storeFile(determineRemotePath(localFilePath, remoteDirectory), localFileInputStream);
 
             localFileInputStream.close();
 
             ensureFileHasSuccessfullyUploaded(hasUploaded);
 
         } catch (FileNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            
+            throw new FtpException(String.format(COULD_NOT_FIND_FILE_MESSAGE, localFilePath), e);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            
+            throw new FtpException("Upload may not have completed.", e);
         }
 
     }
 
+    private String determineRemotePath(String localFilePath, String remoteDirectory) {
+
+        Path remotePath = Paths.get(remoteDirectory);
+
+        String safeRemotePath = remotePath.toString();
+        String fileName = Paths.get(localFilePath).getFileName().toString();
+
+        return safeRemotePath + remotePath.getFileSystem().getSeparator() + fileName;
+    }
+
     private void ensureFileHasSuccessfullyUploaded(boolean hasUploaded) {
-        
+
         if (!hasUploaded)
             throw new FtpException("Upload failed.");
     }

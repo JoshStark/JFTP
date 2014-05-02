@@ -3,6 +3,8 @@ package jftp.connection;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -24,7 +26,7 @@ public class SftpConnection implements Connection {
 
     private ChannelSftp channel;
     private String currentDirectory = ".";
-    
+
     private FileStreamFactory fileStreamFactory = new FileStreamFactory();
 
     public SftpConnection(ChannelSftp channel) {
@@ -73,7 +75,7 @@ public class SftpConnection implements Connection {
     }
 
     @Override
-    public void download(FtpFile file, String localDirectory) {
+    public void download(FtpFile file, String localDirectory)  throws FtpException {
 
         try {
 
@@ -86,26 +88,36 @@ public class SftpConnection implements Connection {
     }
 
     @Override
-    public void upload(String localFilePath, String remoteDirectory) {
-        
+    public void upload(String localFilePath, String remoteDirectory) throws FtpException {
+
         try {
-            
+
             FileInputStream localFileInputStream = fileStreamFactory.createInputStream(localFilePath);
-            
-            channel.put(localFileInputStream, remoteDirectory);
-            
+
+            channel.put(localFileInputStream, determineRemotePath(localFilePath, remoteDirectory));
+
             localFileInputStream.close();
-            
+
         } catch (FileNotFoundException e) {
-            
+
             throw new FtpException(String.format(COULD_NOT_FIND_FILE_MESSAGE, localFilePath), e);
         } catch (SftpException e) {
-            
+
             throw new FtpException("Upload failed to complete.", e);
         } catch (IOException e) {
-            
+
             throw new FtpException("Upload may not have completed.", e);
         }
+    }
+    
+    private String determineRemotePath(String localFilePath, String remoteDirectory) {
+        
+        Path remotePath = Paths.get(remoteDirectory);
+
+        String safeRemotePath = remotePath.toString();
+        String uploadAs = Paths.get(localFilePath).getFileName().toString();
+
+        return safeRemotePath + remotePath.getFileSystem().getSeparator() + uploadAs;
     }
 
     private FtpFile toFtpFile(LsEntry lsEntry) {
