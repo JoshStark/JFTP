@@ -120,11 +120,11 @@ public class SftpConnection implements Connection {
         return safeRemotePath + remotePath.getFileSystem().getSeparator() + uploadAs;
     }
 
-    private FtpFile toFtpFile(LsEntry lsEntry) {
+    private FtpFile toFtpFile(LsEntry lsEntry) throws SftpException {
 
         String name = lsEntry.getFilename();
         long fileSize = lsEntry.getAttrs().getSize();
-        String fullPath = String.format("%s%s%s", currentDirectory, FILE_SEPARATOR, lsEntry.getFilename());
+        String fullPath = String.format("%s%s%s", channel.pwd(), FILE_SEPARATOR, lsEntry.getFilename());
         int mTime = lsEntry.getAttrs().getMTime();
         boolean directory = lsEntry.getAttrs().isDir();
 

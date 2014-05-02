@@ -29,8 +29,6 @@ public class FtpConnection implements Connection {
     private FTPClient client;
     private FileStreamFactory fileStreamFactory = new FileStreamFactory();
 
-    private String currentDirectory = ".";
-
     public FtpConnection(FTPClient client) {
         this.client = client;
     }
@@ -44,8 +42,6 @@ public class FtpConnection implements Connection {
 
             if (!success)
                 throw new FtpException(String.format(NO_SUCH_DIRECTORY_MESSAGE, directory));
-
-            currentDirectory = client.printWorkingDirectory();
 
         } catch (IOException e) {
 
@@ -149,11 +145,11 @@ public class FtpConnection implements Connection {
             throw new FtpException("Server returned failure while downloading.");
     }
 
-    private FtpFile toFtpFile(FTPFile ftpFile) {
+    private FtpFile toFtpFile(FTPFile ftpFile) throws IOException {
 
         String name = ftpFile.getName();
         long fileSize = ftpFile.getSize();
-        String fullPath = String.format("%s%s%s", currentDirectory, FILE_SEPARATOR, ftpFile.getName());
+        String fullPath = String.format("%s%s%s", client.printWorkingDirectory(), FILE_SEPARATOR, ftpFile.getName());
         long mTime = ftpFile.getTimestamp().getTime().getTime();
         boolean isDirectory = ftpFile.isDirectory();
 

@@ -111,14 +111,6 @@ public class FtpConnectionTest {
     }
 
     @Test
-    public void changingDirectoryShouldThenCallOnClientToGetWorkingDirectoryToSetFieldInConnection() throws IOException {
-
-        ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
-
-        verify(mockFtpClient).printWorkingDirectory();
-    }
-
-    @Test
     public void whenListingFilesThenFtpClientListFilesMethodShouldBeCalledForCurrentWorkingDirectory() throws IOException {
 
         ftpConnection.listFiles();
