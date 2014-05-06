@@ -62,7 +62,7 @@ public class FtpConnectionTest {
 
         mockFtpClient = mock(FTPClient.class);
 
-        when(mockFtpClient.changeWorkingDirectory(DIRECTORY_PATH)).thenReturn(true);
+        when(mockFtpClient.changeWorkingDirectory(anyString())).thenReturn(true);
         when(mockFtpClient.printWorkingDirectory()).thenReturn(DIRECTORY_PATH);
         when(mockFtpClient.retrieveFile(anyString(), any(OutputStream.class))).thenReturn(true);
 
@@ -165,11 +165,12 @@ public class FtpConnectionTest {
 
     @Test
     public void whenListingFilesAndGivingRelativePathThenThatPathShouldBeUsedAlongsideCurrentWorkingDir() throws IOException {
-
-        ftpConnection.changeDirectory(DIRECTORY_PATH);
+                
+        when(mockFtpClient.printWorkingDirectory()).thenReturn(DIRECTORY_PATH + "/relativePath");
+        
         ftpConnection.listFiles("relativePath");
 
-        verify(mockFtpClient).listFiles("relativePath");
+        verify(mockFtpClient).listFiles(DIRECTORY_PATH + "/relativePath");
     }
 
     @Test
@@ -312,6 +313,23 @@ public class FtpConnectionTest {
         ftpConnection.printWorkingDirectory();
     }
 
+    @Test
+    public void whenListingFilesOnDifferentPathTheClientShouldCDToThatPathThenCDBackWhenFinished() throws IOException {
+        
+        when(mockFtpClient.printWorkingDirectory()).thenReturn("initial/directory").thenReturn("another/path");
+        
+        ftpConnection.changeDirectory("initial/directory");        
+        ftpConnection.listFiles("another/path");
+        
+        InOrder inOrder = Mockito.inOrder(mockFtpClient);
+        
+        inOrder.verify(mockFtpClient).printWorkingDirectory();
+        inOrder.verify(mockFtpClient).changeWorkingDirectory("another/path");
+        inOrder.verify(mockFtpClient).printWorkingDirectory();
+        inOrder.verify(mockFtpClient).listFiles("another/path");
+        inOrder.verify(mockFtpClient).changeWorkingDirectory("initial/directory");
+    }
+    
     private FTPFile[] createRemoteFTPFiles() {
 
         Calendar calendar = Calendar.getInstance();

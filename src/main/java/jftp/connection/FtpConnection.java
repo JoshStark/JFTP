@@ -51,32 +51,21 @@ public class FtpConnection implements Connection {
 
     @Override
     public String printWorkingDirectory() throws FtpException {
-        
+
         try {
-            
+
             return client.printWorkingDirectory();
-            
+
         } catch (IOException e) {
 
             throw new FtpException("Unable to print the working directory", e);
         }
     }
-    
+
     @Override
     public List<FtpFile> listFiles() throws FtpException {
 
-        String currentDirectory = "";
-        
-        try {
-            
-            currentDirectory = client.printWorkingDirectory();
-            
-            return listFiles(currentDirectory);
-            
-        } catch (IOException e) {
-            
-            throw new FtpException(String.format(FILE_LISTING_ERROR_MESSAGE, currentDirectory), e);
-        }
+        return listFiles(printWorkingDirectory());
     }
 
     @Override
@@ -86,10 +75,18 @@ public class FtpConnection implements Connection {
 
         try {
 
-            FTPFile[] ftpFiles = client.listFiles(remotePath);
+            String originalWorkingDirectory = printWorkingDirectory();
+
+            changeDirectory(remotePath);
+
+            String newWorkingDirectory = printWorkingDirectory();
+
+            FTPFile[] ftpFiles = client.listFiles(newWorkingDirectory);
 
             for (FTPFile file : ftpFiles)
-                files.add(toFtpFile(file));
+                files.add(toFtpFile(file, newWorkingDirectory));
+
+            changeDirectory(originalWorkingDirectory);
 
         } catch (IOException e) {
 
@@ -115,17 +112,17 @@ public class FtpConnection implements Connection {
             ensureFileHasSuccessfullyDownloaded(hasDownloaded);
 
         } catch (FileNotFoundException e) {
-            
+
             throw new FtpException(String.format(FILE_STREAM_OPEN_FAIL_MESSAGE, localDestination), e);
 
         } catch (IOException e) {
-            
+
             throw new FtpException(String.format(FILE_DOWNLOAD_FAILURE_MESSAGE, file.getName()), e);
         }
     }
 
     @Override
-    public void upload(String localFilePath, String remoteDirectory)  throws FtpException {
+    public void upload(String localFilePath, String remoteDirectory) throws FtpException {
 
         try {
 
@@ -138,10 +135,10 @@ public class FtpConnection implements Connection {
             ensureFileHasSuccessfullyUploaded(hasUploaded);
 
         } catch (FileNotFoundException e) {
-            
+
             throw new FtpException(String.format(COULD_NOT_FIND_FILE_MESSAGE, localFilePath), e);
         } catch (IOException e) {
-            
+
             throw new FtpException("Upload may not have completed.", e);
         }
 
@@ -169,11 +166,11 @@ public class FtpConnection implements Connection {
             throw new FtpException("Server returned failure while downloading.");
     }
 
-    private FtpFile toFtpFile(FTPFile ftpFile) throws IOException {
+    private FtpFile toFtpFile(FTPFile ftpFile, String filePath) throws IOException {
 
         String name = ftpFile.getName();
         long fileSize = ftpFile.getSize();
-        String fullPath = String.format("%s%s%s", client.printWorkingDirectory(), FILE_SEPARATOR, ftpFile.getName());
+        String fullPath = filePath + FILE_SEPARATOR + ftpFile.getName();
         long mTime = ftpFile.getTimestamp().getTime().getTime();
         boolean isDirectory = ftpFile.isDirectory();
 
