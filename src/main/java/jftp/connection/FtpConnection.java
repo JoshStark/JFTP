@@ -50,26 +50,42 @@ public class FtpConnection implements Connection {
     }
 
     @Override
-    public List<FtpFile> listFiles() {
+    public String getRemoteDirectory() {
+        return null;
+    }
+    
+    @Override
+    public List<FtpFile> listFiles() throws FtpException {
 
-        return listFiles(".");
+        String currentDirectory = "";
+        
+        try {
+            
+            currentDirectory = client.printWorkingDirectory();
+            
+            return listFiles(currentDirectory);
+            
+        } catch (FtpException | IOException e) {
+            
+            throw new FtpException(String.format(FILE_LISTING_ERROR_MESSAGE, currentDirectory), e);
+        }
     }
 
     @Override
-    public List<FtpFile> listFiles(String relativePath) {
+    public List<FtpFile> listFiles(String remotePath) throws FtpException {
 
         List<FtpFile> files = new ArrayList<FtpFile>();
 
         try {
 
-            FTPFile[] ftpFiles = client.listFiles(relativePath);
+            FTPFile[] ftpFiles = client.listFiles(remotePath);
 
             for (FTPFile file : ftpFiles)
                 files.add(toFtpFile(file));
 
         } catch (IOException e) {
 
-            throw new FtpException(String.format(FILE_LISTING_ERROR_MESSAGE, relativePath), e);
+            throw new FtpException(String.format(FILE_LISTING_ERROR_MESSAGE, remotePath), e);
         }
 
         return files;

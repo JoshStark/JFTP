@@ -20,6 +20,13 @@ public interface Connection {
 	void setRemoteDirectory(String directory);
 	
 	/**
+	 * Reads out the current directory on the server.
+	 * 
+	 * @return Absolute path purporting to the current working directory.
+	 */
+	String getRemoteDirectory();
+	
+	/**
 	 * Lists all files and directories under the current working directory.
 	 * 
 	 * @return 

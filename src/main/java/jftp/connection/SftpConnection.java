@@ -47,6 +47,13 @@ public class SftpConnection implements Connection {
         }
     }
 
+
+    @Override
+    public String getRemoteDirectory() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+    
     @Override
     public List<FtpFile> listFiles() {
 
@@ -109,7 +116,7 @@ public class SftpConnection implements Connection {
             throw new FtpException("Upload may not have completed.", e);
         }
     }
-    
+
     private String determineRemotePath(String localFilePath, String remoteDirectory) {
         
         Path remotePath = Paths.get(remoteDirectory);

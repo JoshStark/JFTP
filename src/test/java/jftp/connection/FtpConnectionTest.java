@@ -115,16 +115,16 @@ public class FtpConnectionTest {
 
         ftpConnection.listFiles();
 
-        verify(mockFtpClient).listFiles(LOCAL_DIRECTORY);
+        verify(mockFtpClient).listFiles(DIRECTORY_PATH);
     }
 
     @Test
     public void ifWhenListingFilesFtpClientThrowsExceptionThenCatchAndRethrowFileListingExcepton() throws IOException {
 
         expectedException.expect(FtpException.class);
-        expectedException.expectMessage(is(equalTo("Unable to list files in directory .")));
+        expectedException.expectMessage(is(equalTo("Unable to list files in directory " + DIRECTORY_PATH)));
 
-        when(mockFtpClient.listFiles(LOCAL_DIRECTORY)).thenThrow(new IOException());
+        when(mockFtpClient.listFiles(DIRECTORY_PATH)).thenThrow(new IOException());
 
         ftpConnection.listFiles();
     }
