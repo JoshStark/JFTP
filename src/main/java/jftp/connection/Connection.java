@@ -17,14 +17,14 @@ public interface Connection {
      * @throws
      * FtpException
 	 */
-	void changeDirectory(String directory);
+	void changeDirectory(String directory) throws FtpException;
 	
 	/**
 	 * Reads out the current directory on the server.
 	 * 
 	 * @return Absolute path purporting to the current working directory.
 	 */
-	String printWorkingDirectory();
+	String printWorkingDirectory() throws FtpException;
 	
 	/**
 	 * Lists all files and directories under the current working directory.
@@ -35,7 +35,7 @@ public interface Connection {
      * @throws
      * FtpException
 	 */
-	List<FtpFile> listFiles();
+	List<FtpFile> listFiles() throws FtpException;
 		
 	/**
 	 * Lists all files in the given path. This will accept either relative or absolute paths.
@@ -52,7 +52,7 @@ public interface Connection {
      * @throws
      * FtpException
 	 */
-	List<FtpFile> listFiles(String path);
+	List<FtpFile> listFiles(String path) throws FtpException;
 	
 	/**
 	 * Downloads the given file to the given local directory.
@@ -67,7 +67,7 @@ public interface Connection {
      * @throws
      * FtpException
 	 */
-	void download(FtpFile file, String localDirectory);
+	void download(FtpFile file, String localDirectory) throws FtpException;
 	
 	/**
 	 * Uploads the given file/directory to the given local directory.
@@ -82,5 +82,5 @@ public interface Connection {
      * @throws
      * FtpException
 	 */
-	void upload(String localFilePath, String remoteDirectory);
+	void upload(String localFilePath, String remoteDirectory) throws FtpException;
 }

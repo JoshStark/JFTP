@@ -240,6 +240,31 @@ public class SftpConnectionTest {
         sftpConnection.upload("local/file/to/upload.txt", "remote/directory");
     }
     
+    @Test
+    public void printingWorkingDirectoryShouldCallOnUnderlyingClientMethodToGetCurrentDirectory() throws SftpException {
+        
+        sftpConnection.printWorkingDirectory();
+        
+        verify(mockChannel).pwd();
+    }
+    
+    @Test
+    public void printingWorkingDirectoryShouldReturnExactlyWhatTheUnderlyingClientReturns() {
+        
+        assertThat(sftpConnection.printWorkingDirectory(), is(equalTo(DIRECTORY)));
+    }
+    
+    @Test
+    public void ifClientThrowsExceptionWhenTryingToGetWorkingDirectoryThenCatchExceptionAndRethrow() throws SftpException  {
+        
+        expectedException.expect(FtpException.class);
+        expectedException.expectMessage(is(equalTo("Unable to print the working directory")));
+        
+        when(mockChannel.pwd()).thenThrow(new SftpException(0, ""));
+        
+        sftpConnection.printWorkingDirectory();
+    }
+    
     private Vector<LsEntry> createEntries() {
 
         Vector<LsEntry> vector = new Vector<LsEntry>();

@@ -286,6 +286,31 @@ public class FtpConnectionTest {
         
         ftpConnection.upload("local/file/to/upload.txt", "remote/directory");
     }
+    
+    @Test
+    public void printingWorkingDirectoryShouldCallOnUnderlyingClientMethodToGetCurrentDirectory() throws IOException {
+        
+        ftpConnection.printWorkingDirectory();
+        
+        verify(mockFtpClient).printWorkingDirectory();
+    }
+    
+    @Test
+    public void printingWorkingDirectoryShouldReturnExactlyWhatTheUnderlyingClientReturns() {
+        
+        assertThat(ftpConnection.printWorkingDirectory(), is(equalTo(DIRECTORY_PATH)));
+    }
+    
+    @Test
+    public void ifClientThrowsExceptionWhenTryingToGetWorkingDirectoryThenCatchExceptionAndRethrow() throws IOException {
+        
+        expectedException.expect(FtpException.class);
+        expectedException.expectMessage(is(equalTo("Unable to print the working directory")));
+        
+        when(mockFtpClient.printWorkingDirectory()).thenThrow(new IOException());
+        
+        ftpConnection.printWorkingDirectory();
+    }
 
     private FTPFile[] createRemoteFTPFiles() {
 

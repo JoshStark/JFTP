@@ -34,7 +34,7 @@ public class FtpConnection implements Connection {
     }
 
     @Override
-    public void changeDirectory(String directory) {
+    public void changeDirectory(String directory) throws FtpException {
 
         try {
 
@@ -50,8 +50,16 @@ public class FtpConnection implements Connection {
     }
 
     @Override
-    public String printWorkingDirectory() {
-        return null;
+    public String printWorkingDirectory() throws FtpException {
+        
+        try {
+            
+            return client.printWorkingDirectory();
+            
+        } catch (IOException e) {
+
+            throw new FtpException("Unable to print the working directory", e);
+        }
     }
     
     @Override

@@ -49,9 +49,16 @@ public class SftpConnection implements Connection {
 
 
     @Override
-    public String printWorkingDirectory() {
-        // TODO Auto-generated method stub
-        return null;
+    public String printWorkingDirectory() throws FtpException {
+        
+        try {
+            
+            return channel.pwd();
+            
+        } catch (SftpException e) {
+
+            throw new FtpException("Unable to print the working directory", e);
+        }
     }
     
     @Override
@@ -62,23 +69,23 @@ public class SftpConnection implements Connection {
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<FtpFile> listFiles(String relativePath) throws FtpException {
-
-        List<FtpFile> files = new ArrayList<FtpFile>();
+    public List<FtpFile> listFiles(String remotePath) throws FtpException {
 
         try {
+            
+            List<FtpFile> files = new ArrayList<FtpFile>();
 
-            Vector<LsEntry> lsEntries = channel.ls(relativePath);
+            Vector<LsEntry> lsEntries = channel.ls(remotePath);
 
             for (LsEntry entry : lsEntries)
                 files.add(toFtpFile(entry));
 
+            return files;
+            
         } catch (SftpException e) {
 
             throw new FtpException("Unable to list files in directory " + currentDirectory, e);
         }
-
-        return files;
     }
 
     @Override
