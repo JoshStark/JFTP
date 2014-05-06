@@ -65,7 +65,7 @@ public class FtpConnection implements Connection {
             
             return listFiles(currentDirectory);
             
-        } catch (FtpException | IOException e) {
+        } catch (IOException e) {
             
             throw new FtpException(String.format(FILE_LISTING_ERROR_MESSAGE, currentDirectory), e);
         }
