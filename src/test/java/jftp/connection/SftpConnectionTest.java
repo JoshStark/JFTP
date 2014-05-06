@@ -79,7 +79,7 @@ public class SftpConnectionTest {
 
         String directory = "directory/path";
 
-        sftpConnection.setRemoteDirectory(directory);
+        sftpConnection.changeDirectory(directory);
 
         verify(mockChannel).cd(directory);
     }
@@ -94,7 +94,7 @@ public class SftpConnectionTest {
 
         doThrow(new SftpException(0, "")).when(mockChannel).cd(directory);
 
-        sftpConnection.setRemoteDirectory(directory);
+        sftpConnection.changeDirectory(directory);
     }
 
     @Test
@@ -116,7 +116,7 @@ public class SftpConnectionTest {
     @Test
     public void setDirectoryMethodShouldCallOnChannelPwdMethodToGetCurrentDirectory() throws SftpException {
 
-        sftpConnection.setRemoteDirectory(DIRECTORY);
+        sftpConnection.changeDirectory(DIRECTORY);
 
         verify(mockChannel, times(1)).pwd();
     }
@@ -135,7 +135,7 @@ public class SftpConnectionTest {
     @Test
     public void lsEntriesReturnedFromChannelShouldBeParsedIntoFtpFileAndReturnedInList() {
 
-        sftpConnection.setRemoteDirectory(DIRECTORY);
+        sftpConnection.changeDirectory(DIRECTORY);
 
         List<FtpFile> files = sftpConnection.listFiles();
 

@@ -83,7 +83,7 @@ public class FtpConnectionTest {
     @Test
     public void whenSettingDirectoryThenFtpClientShouldBeCalledToChangeDirectory() throws IOException {
 
-        ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
+        ftpConnection.changeDirectory(DIRECTORY_PATH);
 
         verify(mockFtpClient).changeWorkingDirectory(DIRECTORY_PATH);
     }
@@ -96,7 +96,7 @@ public class FtpConnectionTest {
 
         when(mockFtpClient.changeWorkingDirectory(DIRECTORY_PATH)).thenThrow(new IOException());
 
-        ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
+        ftpConnection.changeDirectory(DIRECTORY_PATH);
     }
 
     @Test
@@ -107,7 +107,7 @@ public class FtpConnectionTest {
 
         when(mockFtpClient.changeWorkingDirectory(DIRECTORY_PATH)).thenReturn(false);
 
-        ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
+        ftpConnection.changeDirectory(DIRECTORY_PATH);
     }
 
     @Test
@@ -133,7 +133,7 @@ public class FtpConnectionTest {
     public void whenListingFilesThenFileArrayThatListFilesReturnsShouldBeConvertedToListOfFtpFilesAndReturned()
             throws IOException {
 
-        ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
+        ftpConnection.changeDirectory(DIRECTORY_PATH);
 
         List<FtpFile> returnedFiles = ftpConnection.listFiles();
 
@@ -166,7 +166,7 @@ public class FtpConnectionTest {
     @Test
     public void whenListingFilesAndGivingRelativePathThenThatPathShouldBeUsedAlongsideCurrentWorkingDir() throws IOException {
 
-        ftpConnection.setRemoteDirectory(DIRECTORY_PATH);
+        ftpConnection.changeDirectory(DIRECTORY_PATH);
         ftpConnection.listFiles("relativePath");
 
         verify(mockFtpClient).listFiles("relativePath");

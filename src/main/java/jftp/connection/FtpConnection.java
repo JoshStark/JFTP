@@ -34,7 +34,7 @@ public class FtpConnection implements Connection {
     }
 
     @Override
-    public void setRemoteDirectory(String directory) {
+    public void changeDirectory(String directory) {
 
         try {
 
@@ -50,7 +50,7 @@ public class FtpConnection implements Connection {
     }
 
     @Override
-    public String getRemoteDirectory() {
+    public String printWorkingDirectory() {
         return null;
     }
     

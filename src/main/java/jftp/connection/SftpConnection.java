@@ -34,7 +34,7 @@ public class SftpConnection implements Connection {
     }
 
     @Override
-    public void setRemoteDirectory(String directory) {
+    public void changeDirectory(String directory) {
 
         try {
 
@@ -49,20 +49,20 @@ public class SftpConnection implements Connection {
 
 
     @Override
-    public String getRemoteDirectory() {
+    public String printWorkingDirectory() {
         // TODO Auto-generated method stub
         return null;
     }
     
     @Override
-    public List<FtpFile> listFiles() {
+    public List<FtpFile> listFiles() throws FtpException {
 
         return listFiles(".");
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<FtpFile> listFiles(String relativePath) {
+    public List<FtpFile> listFiles(String relativePath) throws FtpException {
 
         List<FtpFile> files = new ArrayList<FtpFile>();
 

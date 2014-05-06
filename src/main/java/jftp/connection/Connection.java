@@ -17,14 +17,14 @@ public interface Connection {
      * @throws
      * FtpException
 	 */
-	void setRemoteDirectory(String directory);
+	void changeDirectory(String directory);
 	
 	/**
 	 * Reads out the current directory on the server.
 	 * 
 	 * @return Absolute path purporting to the current working directory.
 	 */
-	String getRemoteDirectory();
+	String printWorkingDirectory();
 	
 	/**
 	 * Lists all files and directories under the current working directory.
