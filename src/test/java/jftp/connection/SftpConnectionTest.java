@@ -6,7 +6,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -102,34 +101,45 @@ public class SftpConnectionTest {
 
         sftpConnection.listFiles();
 
-        verify(mockChannel).ls(".");
+        verify(mockChannel).ls(DIRECTORY);
     }
 
     @Test
     public void whenListingFilesGivingRelativePathThenChannelLsMethodShouldUseGivenPath() throws SftpException {
 
+        when(mockChannel.pwd()).thenReturn(DIRECTORY + "/some/other/path");
+        
         sftpConnection.listFiles("some/other/path");
 
-        verify(mockChannel).ls("some/other/path");
+        verify(mockChannel).ls(DIRECTORY + "/some/other/path");
     }
-
+    
     @Test
-    public void setDirectoryMethodShouldCallOnChannelPwdMethodToGetCurrentDirectory() throws SftpException {
-
-        sftpConnection.changeDirectory(DIRECTORY);
-
-        verify(mockChannel, times(1)).pwd();
-    }
-
-    @Test
-    public void whenLsCommandThrowsExceptionThenItShouldBeCaughtAndWrappedInFileListingExcepion() throws SftpException {
-
+    public void ifUnderlyingChannelIsUnableToListFilesInPWDThenExceptionShouldBeCaughtAndRethrown() throws SftpException {
+        
         expectedException.expect(FtpException.class);
-        expectedException.expectMessage(is(equalTo("Unable to list files in directory .")));
-
-        when(mockChannel.ls(".")).thenThrow(new SftpException(999, ""));
-
+        expectedException.expectMessage(is(equalTo("Unable to list files in directory " + DIRECTORY)));
+        
+        when(mockChannel.ls(DIRECTORY)).thenThrow(new SftpException(0, ""));
+        
         sftpConnection.listFiles();
+    }
+    
+    @Test
+    public void whenListingFilesInNewDirectoryThenChannelShouldCDThenListThenCDBackToRetainPWD() throws SftpException {
+        
+        when(mockChannel.pwd()).thenReturn("initial/directory").thenReturn("another/path");
+        
+        sftpConnection.changeDirectory("initial/directory");        
+        sftpConnection.listFiles("another/path");
+        
+        InOrder inOrder = Mockito.inOrder(mockChannel);
+        
+        inOrder.verify(mockChannel).pwd();
+        inOrder.verify(mockChannel).cd("another/path");
+        inOrder.verify(mockChannel).pwd();
+        inOrder.verify(mockChannel).ls("another/path");
+        inOrder.verify(mockChannel).cd("initial/directory");
     }
 
     @Test

@@ -20,12 +20,12 @@ public class SftpConnection implements Connection {
 
     private static final String COULD_NOT_FIND_FILE_MESSAGE = "Could not find file: %s";
     private static final String DIRECTORY_DOES_NOT_EXIST_MESSAGE = "Directory %s does not exist.";
+    private static final String FILE_LISTING_ERROR_MESSAGE = "Unable to list files in directory %s";
     private static final String FILE_SEPARATOR = System.getProperty("file.separator");
 
     private static final int MILLIS = 1000;
 
     private ChannelSftp channel;
-    private String currentDirectory = ".";
 
     private FileStreamFactory fileStreamFactory = new FileStreamFactory();
 
@@ -34,19 +34,17 @@ public class SftpConnection implements Connection {
     }
 
     @Override
-    public void changeDirectory(String directory) {
+    public void changeDirectory(String directory) throws FtpException {
 
         try {
 
             channel.cd(directory);
-            currentDirectory = channel.pwd();
 
         } catch (SftpException e) {
 
             throw new FtpException(String.format(DIRECTORY_DOES_NOT_EXIST_MESSAGE, directory), e);
         }
     }
-
 
     @Override
     public String printWorkingDirectory() throws FtpException {
@@ -64,7 +62,7 @@ public class SftpConnection implements Connection {
     @Override
     public List<FtpFile> listFiles() throws FtpException {
 
-        return listFiles(".");
+        return listFiles(printWorkingDirectory());
     }
 
     @Override
@@ -75,16 +73,24 @@ public class SftpConnection implements Connection {
             
             List<FtpFile> files = new ArrayList<FtpFile>();
 
-            Vector<LsEntry> lsEntries = channel.ls(remotePath);
+            String originalWorkingDirectory = printWorkingDirectory();
+            
+            changeDirectory(remotePath);
 
+            String newWorkingDirectory = printWorkingDirectory();
+
+            Vector<LsEntry> lsEntries = channel.ls(newWorkingDirectory);
+            
             for (LsEntry entry : lsEntries)
-                files.add(toFtpFile(entry));
+                files.add(toFtpFile(entry, newWorkingDirectory));
 
+            changeDirectory(originalWorkingDirectory);
+            
             return files;
             
         } catch (SftpException e) {
 
-            throw new FtpException("Unable to list files in directory " + currentDirectory, e);
+            throw new FtpException(String.format(FILE_LISTING_ERROR_MESSAGE, remotePath), e);
         }
     }
 
@@ -134,11 +140,11 @@ public class SftpConnection implements Connection {
         return safeRemotePath + remotePath.getFileSystem().getSeparator() + uploadAs;
     }
 
-    private FtpFile toFtpFile(LsEntry lsEntry) throws SftpException {
+    private FtpFile toFtpFile(LsEntry lsEntry, String filePath) throws SftpException {
 
         String name = lsEntry.getFilename();
         long fileSize = lsEntry.getAttrs().getSize();
-        String fullPath = String.format("%s%s%s", channel.pwd(), FILE_SEPARATOR, lsEntry.getFilename());
+        String fullPath = String.format("%s%s%s", filePath, FILE_SEPARATOR, lsEntry.getFilename());
         int mTime = lsEntry.getAttrs().getMTime();
         boolean directory = lsEntry.getAttrs().isDir();
 
