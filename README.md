@@ -7,16 +7,36 @@ JFTP is an FTP client library that combines the two most well-known FTP librarie
 
 The main goal of JFTP is to give you a way to create and interact with FTP connections, regardless of protocol, with relative ease.
 
+Features
+--------
+
+JFTP has the ability to:
+
+- Connect to FTP, FTPS and SFTP servers
+- Navigate directories relative to the FTP user on the server
+- Download files to a given local directory
+- Upload files to a given remote directory
+- List all files and directories for a given folder (or current folder) on the server
+
+
+What is isn't
+-------------
+
+JFTP is ***not*** a comprehensive solution to current FTP libraries. It was designed with the sole purpose of being a small and simple to use library that gives nothing other than ***basic*** FTP functionality. The FTP client is set to always use a PASSIVE connection, and the SFTP client is set to always check on passwords over SSH keys.
+
+
 Quick FTP Example
 -----------------
 ```java
-Client client = new ClientFactory().createClient(ClientType.FTP);
+Client client = new ClientFactory().createClient(ClientType.FTP); 
+// or new FtpClient(); new SftpClient(); new FtpsClient()
+
 client.setHost("a.host.name");
 client.setPort(21);
 client.setCredentials(new UserCredentials("username", "password"));
 
 Connection connection = client.connect();
-connection.setRemoteDirectory("files/todownload");
+connection.changeDirectory("files/todownload");
   
 List<FtpFile> remoteFiles = connection.listFiles();
   
