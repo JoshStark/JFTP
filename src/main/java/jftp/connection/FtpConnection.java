@@ -24,7 +24,7 @@ public class FtpConnection implements Connection {
     private static final String NO_SUCH_DIRECTORY_MESSAGE = "The directory %s doesn't exist on the remote server.";
     private static final String UNABLE_TO_CD_MESSAGE = "Remote server was unable to change directory.";
 
-    private static final String FILE_SEPARATOR = System.getProperty("file.separator");
+    private static final String FILE_SEPARATOR = "/";
 
     private FTPClient client;
     private FileStreamFactory fileStreamFactory = new FileStreamFactory();
@@ -150,7 +150,7 @@ public class FtpConnection implements Connection {
         String safePath = targetPath.toString();
         String fileName = Paths.get(sourcePathWithName).getFileName().toString();
 
-        return safePath + targetPath.getFileSystem().getSeparator() + fileName;
+        return safePath + FILE_SEPARATOR + fileName;
     }
 
     private void ensureFileHasSuccessfullyDownloaded(boolean hasDownloaded) {
