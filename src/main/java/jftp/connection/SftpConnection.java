@@ -21,7 +21,7 @@ public class SftpConnection implements Connection {
     private static final String COULD_NOT_FIND_FILE_MESSAGE = "Could not find file: %s";
     private static final String DIRECTORY_DOES_NOT_EXIST_MESSAGE = "Directory %s does not exist.";
     private static final String FILE_LISTING_ERROR_MESSAGE = "Unable to list files in directory %s";
-    private static final String FILE_SEPARATOR = System.getProperty("file.separator");
+    private static final String FILE_SEPARATOR = "/";
 
     private static final int MILLIS = 1000;
 
@@ -137,7 +137,7 @@ public class SftpConnection implements Connection {
         String safeRemotePath = remotePath.toString();
         String uploadAs = Paths.get(localFilePath).getFileName().toString();
 
-        return safeRemotePath + remotePath.getFileSystem().getSeparator() + uploadAs;
+        return safeRemotePath + FILE_SEPARATOR + uploadAs;
     }
 
     private FtpFile toFtpFile(LsEntry lsEntry, String filePath) throws SftpException {
