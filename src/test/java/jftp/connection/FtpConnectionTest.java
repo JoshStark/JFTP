@@ -23,7 +23,6 @@ import jftp.util.FileStreamFactory;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -36,9 +35,7 @@ import org.mockito.Mockito;
 public class FtpConnectionTest {
 
     private static final String LOCAL_DIRECTORY = ".";
-    private static final String TEST_DOWNLOAD_FILE = "jUnit_Mock_File.txt";
     private static final String DIRECTORY_PATH = "this/is/a/directory";
-    private static final String FILE_SEPARATOR = System.getProperty("file.separator");
 
     @InjectMocks
     private FtpConnection ftpConnection;
@@ -172,16 +169,21 @@ public class FtpConnectionTest {
 
         verify(mockFtpClient).listFiles(DIRECTORY_PATH + "/relativePath");
     }
+    
+    @Test
+    public void downloadMethodShouldCreateLocalFileStreamFromCorrectPathBasedOnRemoteFileName() throws FileNotFoundException {
+
+        ftpConnection.download("path/to/remote.file", LOCAL_DIRECTORY);
+        
+        verify(mockFileStreamFactory).createOutputStream(LOCAL_DIRECTORY + "/remote.file"); 
+    }
 
     @Test
     public void downloadMethodShouldCallOnFtpClientRetrieveFilesMethodWithRemoteFilename() throws IOException {
 
-        FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(),
-                false);
+        ftpConnection.download("path/to/remote.file", LOCAL_DIRECTORY);
 
-        ftpConnection.download(file, LOCAL_DIRECTORY);
-
-        verify(mockFtpClient).retrieveFile(file.getFullPath(), mockFileOutputStream);
+        verify(mockFtpClient).retrieveFile("path/to/remote.file", mockFileOutputStream);
     }
 
     @Test
@@ -189,14 +191,11 @@ public class FtpConnectionTest {
 
         expectedException.expect(FtpException.class);
         expectedException
-                .expectMessage(is(equalTo("Unable to write to local directory ." + FILE_SEPARATOR + TEST_DOWNLOAD_FILE)));
+                .expectMessage(is(equalTo("Unable to write to local directory " + LOCAL_DIRECTORY + "/remote.file")));
 
-        FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(),
-                false);
+        when(mockFtpClient.retrieveFile("path/to/remote.file", mockFileOutputStream)).thenThrow(new FileNotFoundException());
 
-        when(mockFtpClient.retrieveFile(file.getFullPath(), mockFileOutputStream)).thenThrow(new FileNotFoundException());
-
-        ftpConnection.download(file, LOCAL_DIRECTORY);
+        ftpConnection.download("path/to/remote.file", LOCAL_DIRECTORY);
     }
 
     @Test
@@ -204,14 +203,11 @@ public class FtpConnectionTest {
             throws IOException {
 
         expectedException.expect(FtpException.class);
-        expectedException.expectMessage(is(equalTo("Unable to download file " + TEST_DOWNLOAD_FILE)));
+        expectedException.expectMessage(is(equalTo("Unable to download file path/to/remote.file")));
 
-        FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(),
-                false);
+        when(mockFtpClient.retrieveFile("path/to/remote.file", mockFileOutputStream)).thenThrow(new IOException());
 
-        when(mockFtpClient.retrieveFile(file.getFullPath(), mockFileOutputStream)).thenThrow(new IOException());
-
-        ftpConnection.download(file, LOCAL_DIRECTORY);
+        ftpConnection.download("path/to/remote.file", LOCAL_DIRECTORY);
     }
 
     @Test
@@ -220,12 +216,9 @@ public class FtpConnectionTest {
         expectedException.expect(FtpException.class);
         expectedException.expectMessage(is(equalTo("Server returned failure while downloading.")));
 
-        FtpFile file = new FtpFile(TEST_DOWNLOAD_FILE, 1000, "/full/path/to/FileToDownload.txt", new DateTime().getMillis(),
-                false);
+        when(mockFtpClient.retrieveFile("path/to/remote.file", mockFileOutputStream)).thenReturn(false);
 
-        when(mockFtpClient.retrieveFile(file.getFullPath(), mockFileOutputStream)).thenReturn(false);
-
-        ftpConnection.download(file, LOCAL_DIRECTORY);
+        ftpConnection.download("path/to/remote.file", LOCAL_DIRECTORY);
     }
 
     @Test

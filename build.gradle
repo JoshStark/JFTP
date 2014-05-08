@@ -3,11 +3,12 @@ apply plugin: 'eclipse'
 apply plugin: 'application'
 
 group 'jftp'
-version '0.1-alpha'
+version '0.2-alpha'
 
 repositories { mavenCentral() }
 
 dependencies {
+    
     compile 'com.jcraft:jsch:0.1.50'
     compile 'joda-time:joda-time:2.3'
     compile 'commons-net:commons-net:3.3'
@@ -26,5 +27,9 @@ task jarWithDependencies(type: Jar, dependsOn: 'build') {
     from files(sourceSets.main.output.classesDir)
     from files(sourceSets.main.output.resourcesDir)
     
-    from {configurations.compile.collect {zipTree(it)}}
+    from {
+        configurations.compile.collect {
+            zipTree(it)
+        }
+    }
 }

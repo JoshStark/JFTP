@@ -178,24 +178,20 @@ public class SftpConnectionTest {
     @Test
     public void downloadMethodShouldCallChannelGetMethodWithFtpFileNameAndDirectory() throws SftpException {
 
-        FtpFile file = new FtpFile("File Name.txt", 1000, "/remote/server/dir/File Name.txt", 123456789, false);
+        sftpConnection.download("path/to/file.txt", "some/directory");
 
-        sftpConnection.download(file, "some/directory");
-
-        verify(mockChannel).get("File Name.txt", "some/directory");
+        verify(mockChannel).get("path/to/file.txt", "some/directory");
     }
 
     @Test
     public void downloadMethodShouldThrowDownloadFailedExceptionWhenChannelThrowsSftpConnection() throws SftpException {
 
         expectedException.expect(FtpException.class);
-        expectedException.expectMessage(is(equalTo("Unable to download file File Name.txt")));
+        expectedException.expectMessage(is(equalTo("Unable to download file path/to/file.txt")));
 
-        doThrow(new SftpException(999, "")).when(mockChannel).get(anyString(), anyString());
+        doThrow(new SftpException(999, "")).when(mockChannel).get("path/to/file.txt", "some/directory");
 
-        FtpFile file = new FtpFile("File Name.txt", 1000, "remote/server/dir/File Name.txt", 123456789, false);
-
-        sftpConnection.download(file, "some/directory");
+        sftpConnection.download("path/to/file.txt", "some/directory");
     }
 
     @Test

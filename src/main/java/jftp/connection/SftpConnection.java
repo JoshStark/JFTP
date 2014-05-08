@@ -95,15 +95,15 @@ public class SftpConnection implements Connection {
     }
 
     @Override
-    public void download(FtpFile file, String localDirectory)  throws FtpException {
+    public void download(String remoteFilePath, String localDirectory)  throws FtpException {
 
         try {
 
-            channel.get(file.getName(), localDirectory);
+            channel.get(remoteFilePath, localDirectory);
 
         } catch (SftpException e) {
 
-            throw new FtpException("Unable to download file " + file.getName(), e);
+            throw new FtpException("Unable to download file " + remoteFilePath, e);
         }
     }
 

@@ -97,15 +97,15 @@ public class FtpConnection implements Connection {
     }
 
     @Override
-    public void download(FtpFile file, String localDirectory) throws FtpException {
+    public void download(String remoteFilePath, String localDirectory) throws FtpException {
 
-        String localDestination = String.format("%s%s%s", localDirectory, FILE_SEPARATOR, file.getName());
+        String localDestination = determinePath(remoteFilePath, localDirectory);
 
         try {
 
             OutputStream outputStream = fileStreamFactory.createOutputStream(localDestination);
 
-            boolean hasDownloaded = client.retrieveFile(file.getFullPath(), outputStream);
+            boolean hasDownloaded = client.retrieveFile(remoteFilePath, outputStream);
 
             outputStream.close();
 
@@ -117,7 +117,7 @@ public class FtpConnection implements Connection {
 
         } catch (IOException e) {
 
-            throw new FtpException(String.format(FILE_DOWNLOAD_FAILURE_MESSAGE, file.getName()), e);
+            throw new FtpException(String.format(FILE_DOWNLOAD_FAILURE_MESSAGE, remoteFilePath), e);
         }
     }
 
@@ -128,7 +128,7 @@ public class FtpConnection implements Connection {
 
             InputStream localFileInputStream = fileStreamFactory.createInputStream(localFilePath);
 
-            boolean hasUploaded = client.storeFile(determineRemotePath(localFilePath, remoteDirectory), localFileInputStream);
+            boolean hasUploaded = client.storeFile(determinePath(localFilePath, remoteDirectory), localFileInputStream);
 
             localFileInputStream.close();
 
@@ -141,17 +141,16 @@ public class FtpConnection implements Connection {
 
             throw new FtpException("Upload may not have completed.", e);
         }
-
     }
 
-    private String determineRemotePath(String localFilePath, String remoteDirectory) {
+    private String determinePath(String sourcePathWithName, String targetPathWithoutName) {
 
-        Path remotePath = Paths.get(remoteDirectory);
+        Path targetPath = Paths.get(targetPathWithoutName);
 
-        String safeRemotePath = remotePath.toString();
-        String fileName = Paths.get(localFilePath).getFileName().toString();
+        String safePath = targetPath.toString();
+        String fileName = Paths.get(sourcePathWithName).getFileName().toString();
 
-        return safeRemotePath + remotePath.getFileSystem().getSeparator() + fileName;
+        return safePath + targetPath.getFileSystem().getSeparator() + fileName;
     }
 
     private void ensureFileHasSuccessfullyUploaded(boolean hasUploaded) {
