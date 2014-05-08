@@ -56,6 +56,14 @@ public class FtpClient extends Client {
         }
     }
 
+    private void connectClientAndCheckStatus() throws SocketException, IOException, FtpException {
+
+        ftpClient.connect(host, port);
+
+        if (!FTPReply.isPositiveCompletion(ftpClient.getReplyCode()))
+            throw new FtpException(String.format(STATUS_ERROR_MESSAGE, host, port));
+    }
+
     private void login() throws IOException, FtpException {
 
         boolean hasLoggedIn = ftpClient.login(userCredentials.getUsername(), userCredentials.getPassword());
@@ -71,13 +79,5 @@ public class FtpClient extends Client {
         ftpClient.enterLocalPassiveMode();
         ftpClient.setControlKeepAliveTimeout(FIVE_MINUTES);
         ftpClient.setFileType(FTPClient.BINARY_FILE_TYPE);
-    }
-
-    private void connectClientAndCheckStatus() throws SocketException, IOException, FtpException {
-
-        ftpClient.connect(host, port);
-
-        if (!FTPReply.isPositiveCompletion(ftpClient.getReplyCode()))
-            throw new FtpException(String.format(STATUS_ERROR_MESSAGE, host, port));
     }
 }

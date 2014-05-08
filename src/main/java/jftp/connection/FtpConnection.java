@@ -50,15 +50,27 @@ public class FtpConnection implements Connection {
     }
 
     @Override
-    public String printWorkingDirectory() throws FtpException {
+    public void download(String remoteFilePath, String localDirectory) throws FtpException {
+
+        String localDestination = determinePath(remoteFilePath, localDirectory);
 
         try {
 
-            return client.printWorkingDirectory();
+            OutputStream outputStream = fileStreamFactory.createOutputStream(localDestination);
+
+            boolean hasDownloaded = client.retrieveFile(remoteFilePath, outputStream);
+
+            outputStream.close();
+
+            ensureFileHasSuccessfullyDownloaded(hasDownloaded);
+
+        } catch (FileNotFoundException e) {
+
+            throw new FtpException(String.format(FILE_STREAM_OPEN_FAIL_MESSAGE, localDestination), e);
 
         } catch (IOException e) {
 
-            throw new FtpException("Unable to print the working directory", e);
+            throw new FtpException(String.format(FILE_DOWNLOAD_FAILURE_MESSAGE, remoteFilePath), e);
         }
     }
 
@@ -97,27 +109,15 @@ public class FtpConnection implements Connection {
     }
 
     @Override
-    public void download(String remoteFilePath, String localDirectory) throws FtpException {
-
-        String localDestination = determinePath(remoteFilePath, localDirectory);
+    public String printWorkingDirectory() throws FtpException {
 
         try {
 
-            OutputStream outputStream = fileStreamFactory.createOutputStream(localDestination);
-
-            boolean hasDownloaded = client.retrieveFile(remoteFilePath, outputStream);
-
-            outputStream.close();
-
-            ensureFileHasSuccessfullyDownloaded(hasDownloaded);
-
-        } catch (FileNotFoundException e) {
-
-            throw new FtpException(String.format(FILE_STREAM_OPEN_FAIL_MESSAGE, localDestination), e);
+            return client.printWorkingDirectory();
 
         } catch (IOException e) {
 
-            throw new FtpException(String.format(FILE_DOWNLOAD_FAILURE_MESSAGE, remoteFilePath), e);
+            throw new FtpException("Unable to print the working directory", e);
         }
     }
 
@@ -153,16 +153,16 @@ public class FtpConnection implements Connection {
         return safePath + targetPath.getFileSystem().getSeparator() + fileName;
     }
 
-    private void ensureFileHasSuccessfullyUploaded(boolean hasUploaded) {
-
-        if (!hasUploaded)
-            throw new FtpException("Upload failed.");
-    }
-
     private void ensureFileHasSuccessfullyDownloaded(boolean hasDownloaded) {
 
         if (!hasDownloaded)
             throw new FtpException("Server returned failure while downloading.");
+    }
+
+    private void ensureFileHasSuccessfullyUploaded(boolean hasUploaded) {
+
+        if (!hasUploaded)
+            throw new FtpException("Upload failed.");
     }
 
     private FtpFile toFtpFile(FTPFile ftpFile, String filePath) throws IOException {

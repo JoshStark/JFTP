@@ -51,12 +51,6 @@ public class SftpClient extends Client {
 	    session.disconnect();
 	}
 
-    private void openChannelFromSession() throws JSchException {
-        
-        channel = session.openChannel(SFTP);
-        channel.connect();
-    }
-
     private void configureSessionAndConnect() throws JSchException {
         
         session = jsch.getSession(userCredentials.getUsername(), host, port);
@@ -64,5 +58,11 @@ public class SftpClient extends Client {
         session.setPassword(userCredentials.getPassword());
 
         session.connect();
+    }
+
+    private void openChannelFromSession() throws JSchException {
+        
+        channel = session.openChannel(SFTP);
+        channel.connect();
     }
 }

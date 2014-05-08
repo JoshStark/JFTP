@@ -337,11 +337,15 @@ public class FtpConnectionTest {
             when(file.getName()).thenReturn("File " + (i + 1));
             when(file.getSize()).thenReturn((long) (i + 1) * 1000);
             when(file.getTimestamp()).thenReturn(calendar);
-            when(file.isDirectory()).thenReturn((i + 1) % 2 == 0 ? true : false);
+            when(file.isDirectory()).thenReturn(setTrueIfNumberIsEven(i));
 
             files[i] = file;
         }
 
         return files;
+    }
+
+    private boolean setTrueIfNumberIsEven(int i) {
+        return (i + 1) % 2 == 0 ? true : false;
     }
 }

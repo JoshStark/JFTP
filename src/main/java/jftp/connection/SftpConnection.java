@@ -47,15 +47,15 @@ public class SftpConnection implements Connection {
     }
 
     @Override
-    public String printWorkingDirectory() throws FtpException {
-        
+    public void download(String remoteFilePath, String localDirectory)  throws FtpException {
+
         try {
-            
-            return channel.pwd();
-            
+
+            channel.get(remoteFilePath, localDirectory);
+
         } catch (SftpException e) {
 
-            throw new FtpException("Unable to print the working directory", e);
+            throw new FtpException("Unable to download file " + remoteFilePath, e);
         }
     }
     
@@ -95,15 +95,15 @@ public class SftpConnection implements Connection {
     }
 
     @Override
-    public void download(String remoteFilePath, String localDirectory)  throws FtpException {
-
+    public String printWorkingDirectory() throws FtpException {
+        
         try {
-
-            channel.get(remoteFilePath, localDirectory);
-
+            
+            return channel.pwd();
+            
         } catch (SftpException e) {
 
-            throw new FtpException("Unable to download file " + remoteFilePath, e);
+            throw new FtpException("Unable to print the working directory", e);
         }
     }
 
