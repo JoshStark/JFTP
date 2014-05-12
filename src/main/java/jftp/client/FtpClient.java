@@ -78,6 +78,5 @@ public class FtpClient extends Client {
 
         ftpClient.enterLocalPassiveMode();
         ftpClient.setControlKeepAliveTimeout(FIVE_MINUTES);
-        ftpClient.setFileType(FTPClient.BINARY_FILE_TYPE);
     }
 }
