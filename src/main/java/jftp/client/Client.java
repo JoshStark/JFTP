@@ -10,26 +10,14 @@ public abstract class Client {
 	
 	protected UserCredentials userCredentials = UserCredentials.ANONYMOUS;
 	
-	/**
-	 * 
-	 * @param userCredentials
-	 */
 	public void setCredentials(UserCredentials userCredentials) {
 		this.userCredentials = userCredentials;
 	}
 
-	/**
-	 * 
-	 * @param host
-	 */
 	public void setHost(String host) {
 		this.host = host;
 	}
 
-	/**
-	 * 
-	 * @param port
-	 */
 	public void setPort(int port) {
 		this.port = port;
 	}
@@ -46,8 +34,5 @@ public abstract class Client {
 	 */
 	public abstract Connection connect();
 	
-	/**
-	 * 
-	 */
 	public abstract void disconnect();
 }
