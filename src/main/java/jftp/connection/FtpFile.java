@@ -19,42 +19,22 @@ public class FtpFile {
 		this.directory = isDirectory;
 	}
 
-	/**
-	 * 
-	 * @return
-	 */
 	public String getName() {
 		return name;
 	}
 
-	/**
-	 * 
-	 * @return
-	 */
 	public long getSize() {
 		return size;
 	}
 
-	/**
-	 * 
-	 * @return
-	 */
 	public String getFullPath() {
 		return fullPath;
 	}
 
-	/**
-	 * 
-	 * @return
-	 */
 	public DateTime getLastModified() {
 		return lastModified;
 	}
 
-	/**
-	 * 
-	 * @return
-	 */
 	public boolean isDirectory() {
 		return directory;
 	}
